@@ -1,0 +1,33 @@
+{% extends './base.html' %}
+
+{% block title %}
+    Register
+{% endblock %}
+
+
+{% block page %}
+    Register
+{% endblock %}
+
+
+{% block form %}
+    <form class="we-form" method="post">
+        {% csrf_token %}
+        <input name="firstname" type="text" placeholder="Frst Name">
+        <input name="lastname" type="password" placeholder="Last Name">
+        <input name="email" type="password" placeholder="Email">
+        <input name="username" type="password" placeholder="Username">
+        <input name="password" type="password" placeholder="Password">
+        <select name="gender" id="">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+        <button type="submit" data-ripple="">Register</button>
+      
+    </form>
+{% endblock %}
+
+{% block link %}
+	<span>already have an account? <a class="we-account underline" href="{% url 'user_login' %}"
+                                                            title="">Login now</a></span>
+{% endblock %}
