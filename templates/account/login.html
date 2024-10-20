@@ -11,16 +11,24 @@
 
 
 {% block form %}
-    <form class="we-form" method="post">
+    <form class="we-form" method="post" action="{% url 'user_login' %}">
         {% csrf_token %}
-        <input name="username" type="text" placeholder="Username">
-        <input name="password" type="password" placeholder="Password">
-        <button type="submit" data-ripple="">sign in</button>
+        {{ form.username }}
+        {{ form.password }}
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <button type="submit">sign in</button>
+
         <a class="forgot underline" href="#" title="">forgot password?</a>
     </form>
 {% endblock %}
 
 {% block link %}
-	<span>don't have an account? <a class="we-account underline" href="{% url 'user_register' %}"
-                                                            title="">Register now</a></span>
+    <span>don't have an account? <a class="we-account underline" href="{% url 'user_register' %}"
+                                    title="">Register now</a></span>
 {% endblock %}

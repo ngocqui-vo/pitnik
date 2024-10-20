@@ -273,8 +273,8 @@
 				
 			</ul>
 			<div class="user-img">
-				<h5>Jack Carter</h5>
-				<img src="{% static 'images/resources/admin.jpg' %}" alt="">
+				<h5>{{ request.user.first_name }} {{ request.user.last_name }}</h5>
+				<img src="{% if request.user.profile.avatar %}{{ request.user.profile.avatar.url }}{% else %}{% static 'images/resources/admin.jpg' %}{% endif %}" alt="">
 				<span class="status f-online"></span>
 				<div class="user-setting">
 					<span class="seting-title">Chat setting <a href="#" title="">see all</a></span>
