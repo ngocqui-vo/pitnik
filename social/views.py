@@ -1,44 +1,49 @@
-from .models import ImagePost, Post
-from django.shortcuts import render, redirect
-from .forms import PostForm, ImagePostFormSet
-from django.forms import modelformset_factory
-from django.contrib import messages
-from django.db import transaction
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.pagination import PageNumberPagination
+from .models import Post, ImagePost
+from .serializers import CreatePostSerializer, PostSerializer
+from django.shortcuts import render
 
-# Create your views here.
+
 def index(request):
     return render(request, 'social/index.html')
 
 
+class PostPagination(PageNumberPagination):
+    page_size = 2  # Mỗi trang hiển thị 10 bài viết
+    # page_size_query_param = 'page_size'  # Người dùng có thể điều chỉnh số bài viết trên mỗi trang
+    # max_page_size = 100  # Giới hạn tối đa số bài viết mỗi trang là 100
 
-def create_post(request):
-    if request.method == 'POST':
-        post_form = PostForm(request.POST)
-        formset = ImagePostFormSet(request.POST, request.FILES, queryset=ImagePost.objects.none())
 
-        if post_form.is_valid() and formset.is_valid():
-            try:
-                with transaction.atomic():
-                    # Lưu bài post
-                    post = post_form.save(commit=False)
-                    post.user = request.user  # Giả sử bạn đã có người dùng đăng nhập
-                    post.save()
+@api_view(['GET'])
+def post_list(request):
+    posts = Post.objects.all()  # Lấy tất cả bài viết từ database
+    paginator = PostPagination()  # Sử dụng class phân trang đã tạo
+    result_page = paginator.paginate_queryset(posts, request)  # Phân trang kết quả
+    serializer = PostSerializer(result_page, many=True)  # Chuyển dữ liệu thành JSON
+    return paginator.get_paginated_response(serializer.data)  # Trả về dữ liệu phân trang
 
-                    # Lưu các ảnh
-                    for form in formset.cleaned_data:
-                        if form:
-                            image = form['image']
-                            ImagePost.objects.create(post=post, image=image)
 
-                    messages.success(request, "Bài post và hình ảnh đã được tạo thành công!")
-                    return redirect('post_list')  # Điều hướng đến danh sách bài post sau khi thành công
 
-            except Exception as e:
-                messages.error(request, "Có lỗi xảy ra trong quá trình tạo bài post.")
-        else:
-            messages.error(request, "Đã xảy ra lỗi khi nhập dữ liệu.")
-    else:
-        post_form = PostForm()
-        formset = ImagePostFormSet(queryset=ImagePost.objects.none())
+class PostCreateView(APIView):
+    parser_classes = (MultiPartParser, FormParser)  # Để xử lý file upload
 
-    return render(request, 'create_post.html', {'post_form': post_form, 'formset': formset})
+    def post(self, request, *args, **kwargs):
+        content = request.data.get('content')  # Lấy nội dung bài đăng
+        images = request.FILES.getlist('images')  # Lấy danh sách các file hình ảnh
+        user = request.user
+
+        # Tạo bài đăng mới
+        post = Post.objects.create(user=user, content=content)
+
+        # Lưu từng hình ảnh
+        for image in images:
+            ImagePost.objects.create(post=post, image=image)
+
+        # Trả về phản hồi với thông tin bài đăng và hình ảnh đã upload
+        serializer = CreatePostSerializer(post)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

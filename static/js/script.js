@@ -465,34 +465,34 @@ $('#nightmode').on('change', function() {
 		}).data({'min':0,'max':20,'step':1});
 	}	
 	
-if ($.isFunction($.fn.loadMoreResults)) {	
-	$('.loadMore').loadMoreResults({
-		displayedItems: 3,
-		showItems: 1,
-		button: {
-		  'class': 'btn-load-more',
-		  'text': 'Load More'
-		}
-	});	
-	
-	$('.load-more').loadMoreResults({
-		displayedItems: 8,
-		showItems: 1,
-		button: {
-		  'class': 'btn-load-more',
-		  'text': 'Load More'
-		}
-	});
-	
-	$('.load-more4').loadMoreResults({
-		displayedItems: 8,
-		showItems: 1,
-		button: {
-		  'class': 'btn-load-more',
-		  'text': 'Load More'
-		}
-	});
-}
+// if ($.isFunction($.fn.loadMoreResults)) {
+// 	$('.loadMore').loadMoreResults({
+// 		displayedItems: 3,
+// 		showItems: 1,
+// 		button: {
+// 		  'class': 'btn-load-more',
+// 		  'text': 'Load More'
+// 		}
+// 	});
+//
+// 	$('.load-more').loadMoreResults({
+// 		displayedItems: 8,
+// 		showItems: 1,
+// 		button: {
+// 		  'class': 'btn-load-more',
+// 		  'text': 'Load More'
+// 		}
+// 	});
+//
+// 	$('.load-more4').loadMoreResults({
+// 		displayedItems: 8,
+// 		showItems: 1,
+// 		button: {
+// 		  'class': 'btn-load-more',
+// 		  'text': 'Load More'
+// 		}
+// 	});
+// }
 	//===== owl carousel  =====//
 	if ($.isFunction($.fn.owlCarousel)) {
 		$('.sponsor-logo').owlCarousel({
