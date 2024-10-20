@@ -1,16 +1,14 @@
-from django.shortcuts import render
 from .models import ImagePost, Post
-from .forms import ImagePostFormSet
-# Create your views here.
-def index(request):
-    return render(request, 'social/index.html')
-
-
 from django.shortcuts import render, redirect
 from .forms import PostForm, ImagePostFormSet
 from django.forms import modelformset_factory
 from django.contrib import messages
 from django.db import transaction
+
+# Create your views here.
+def index(request):
+    return render(request, 'social/index.html')
+
 
 
 def create_post(request):
