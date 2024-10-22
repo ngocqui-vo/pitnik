@@ -1,3 +1,4 @@
+from django.contrib.auth import logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -7,8 +8,9 @@ from rest_framework.pagination import PageNumberPagination
 from .models import Post, ImagePost
 from .serializers import CreatePostSerializer, PostSerializer
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
-
+@login_required
 def index(request):
     return render(request, 'social/index.html')
 

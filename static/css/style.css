@@ -18519,3 +18519,13 @@ table.adition tbody tr td {
 	z-index: 999999 !important;
 }
 
+/*.coment-area {*/
+/*    display: none;*/
+/*    opacity: 0;*/
+/*    transition: opacity 0.5s ease-in;*/
+/*}*/
+
+/*.coment-area.active {*/
+/*    display: block;*/
+/*    opacity: 1;*/
+/*}*/
