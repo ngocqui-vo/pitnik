@@ -24,13 +24,13 @@ class Like(models.Model):
 
 
 class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='comments', on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.user.username} - {self.content}'
+        return f'{self.user.username} - {self.post.content} - {self.content}'
 
 class Friendship(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_friend_requests')

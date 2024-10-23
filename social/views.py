@@ -27,6 +27,7 @@ def post_list(request):
     paginator = PostPagination()  # Sử dụng class phân trang đã tạo
     result_page = paginator.paginate_queryset(posts, request)  # Phân trang kết quả
     serializer = PostSerializer(result_page, many=True)  # Chuyển dữ liệu thành JSON
+    data = serializer.data
     return paginator.get_paginated_response(serializer.data)  # Trả về dữ liệu phân trang
 
 
