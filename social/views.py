@@ -2,6 +2,7 @@ from django.contrib.auth import logout
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.template.loader import render_to_string
+from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,7 +10,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, ImagePost, Comment
+from .models import Post, ImagePost, Comment, Like
 from .serializers import CreatePostSerializer, PostSerializer
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -27,14 +28,18 @@ class PostPagination(PageNumberPagination):
 
 @api_view(['GET'])
 def post_list(request):
-    posts = Post.objects.order_by('-created_at')      # Lấy tất cả bài viết từ database
+    posts = Post.objects.order_by('-created_at')  # Lấy tất cả bài viết từ database
     paginator = PostPagination()  # Sử dụng class phân trang đã tạo
     result_page = paginator.paginate_queryset(posts, request)  # Phân trang kết quả
+
+    # Lấy danh sách các bài viết mà người dùng đã "like"
+    liked_posts_ids = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
 
     # Tạo context chứa danh sách bài viết đã phân trang
     context = {
         'posts': result_page,  # Dữ liệu đã phân trang
         'user': request.user,
+        'liked_posts_ids': liked_posts_ids,  # Thêm danh sách ID bài viết đã "like"
     }
 
     # Render template với context đã tạo
@@ -97,3 +102,20 @@ def add_comment(request):
         return JsonResponse({'comment_html': comment_html}, status=200)
 
     return JsonResponse({'error': 'Invalid request.'}, status=400)
+
+
+class LikePostView(View):
+    def post(self, request, post_id):
+        if request.user.is_authenticated:
+            post = Post.objects.get(id=post_id)
+            # Kiểm tra xem user đã "like" post này chưa
+            like, created = Like.objects.get_or_create(user=request.user, post=post)
+
+            if created:
+                # Nếu tạo mới "like", trả về thông tin thành công
+                return JsonResponse({'message': 'Liked', 'liked': True, 'like_count': post.likes.count()})
+            else:
+                # Nếu đã "like" rồi, xóa "like" này
+                like.delete()
+                return JsonResponse({'message': 'Unliked', 'liked': False, 'like_count': post.likes.count()})
+        return JsonResponse({'error': 'User not authenticated'}, status=403)

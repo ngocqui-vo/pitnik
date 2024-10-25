@@ -63,8 +63,10 @@
                         <ul>
 
                             <li>
-                                <div class="likes heart" title="Like/Dislike">❤
-                                    <span>{{ post.likes.count }}</span></div>
+                                <div class="likes heart {% if post.id in liked_posts_ids %}happy{% endif %}"
+                                     title="Like/Dislike" data-post-id="{{ post.id }}">
+                                    ❤ <span class="like-count">{{ post.likes.count }}</span>
+                                </div>
                             </li>
                             <li>
                             <span class="comment" title="Comments">

@@ -13,22 +13,16 @@
 {% block form %}
     <form class="we-form" method="post">
         {% csrf_token %}
-{#        <input name="firstname" type="text" placeholder="Frst Name">#}
-{#        <input name="lastname" type="password" placeholder="Last Name">#}
-{#        <input name="email" type="password" placeholder="Email">#}
-{#        <input name="username" type="password" placeholder="Username">#}
-{#        <input name="password" type="password" placeholder="Password">#}
-{#        <select name="gender" id="">#}
-{#            <option value="Male">Male</option>#}
-{#            <option value="Female">Female</option>#}
-{#        </select>#}
-        {{ user_form.first_name }}
-        {{ user_form.last_name }}
-        {{ user_form.username }}
-        {{ user_form.email }}
-        {{ user_form.password }}
-        {{ profile_form.phone }}
-        {{ profile_form.gender }}
+        <input name="first_name" type="text" placeholder="Frst Name">
+        <input name="last_name" type="text" placeholder="Last Name">
+        <input name="email" type="text" placeholder="Email">
+        <input name="username" type="text" placeholder="Username">
+        <input name="password" type="password" placeholder="Password">
+        <input name="phone" type="text" placeholder="Phone">
+        <select name="gender" id="">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
         <button type="submit" data-ripple="">Register</button>
       
     </form>

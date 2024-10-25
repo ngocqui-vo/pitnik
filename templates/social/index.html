@@ -208,6 +208,40 @@
 {% endblock %}
 
 {% block scripts %}
+    
+    <!-- like ảnh -->
+    <script>
+        $(document).ready(function () {
+            // Sử dụng sự kiện on để xử lý click cho các phần tử động
+            $(document).on('click', '.likes.heart', function () {
+                const postId = $(this).data('post-id');
+                const button = $(this);
+
+                $.ajax({
+                    type: 'POST',
+                    url: `/like/${postId}/`,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'  // Thêm CSRF token
+                    },
+                    success: function (response) {
+                        button.find('.like-count').text(response.like_count); // Cập nhật số lượng like
+                        // Cập nhật trạng thái của nút like
+                        console.log('like thanh cong')
+                        if (response.liked) {
+                            button.addClass('happy'); // Thêm lớp 'liked' nếu đã thích
+                            
+                        } else {
+                            button.removeClass('happy'); // Xóa lớp 'liked' nếu đã bỏ thích
+                        }
+                    },
+                    error: function (xhr) {
+                        alert(xhr.responseJSON.error); // Hiển thị thông báo lỗi nếu có
+                    }
+                });
+            });
+        });
+    </script>
+    <!-- hiện modal ảnh -->
     <script>
         $(document).ready(function () {
             // Sử dụng delegation để gán sự kiện cho các phần tử mới
@@ -256,10 +290,7 @@
 
 
     </script>
-    <script>
 
-
-    </script>
 
     <!-- Load post thời điểm ban đầu-->
     <script>

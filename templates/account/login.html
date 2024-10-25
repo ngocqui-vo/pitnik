@@ -13,8 +13,8 @@
 {% block form %}
     <form class="we-form" method="post" action="{% url 'user_login' %}">
         {% csrf_token %}
-        {{ form.username }}
-        {{ form.password }}
+        <input type="text" name="username" placeholder="Username">
+        <input type="password" name="password" placeholder="Password">
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
