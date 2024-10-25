@@ -1,11 +1,15 @@
 from django.contrib.auth import logout
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+from django.template.loader import render_to_string
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, ImagePost
+from .models import Post, ImagePost, Comment
 from .serializers import CreatePostSerializer, PostSerializer
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -23,14 +27,27 @@ class PostPagination(PageNumberPagination):
 
 @api_view(['GET'])
 def post_list(request):
-    posts = Post.objects.all()  # Lấy tất cả bài viết từ database
+    posts = Post.objects.order_by('-created_at')      # Lấy tất cả bài viết từ database
     paginator = PostPagination()  # Sử dụng class phân trang đã tạo
     result_page = paginator.paginate_queryset(posts, request)  # Phân trang kết quả
-    serializer = PostSerializer(result_page, many=True)  # Chuyển dữ liệu thành JSON
-    data = serializer.data
-    return paginator.get_paginated_response(serializer.data)  # Trả về dữ liệu phân trang
 
+    # Tạo context chứa danh sách bài viết đã phân trang
+    context = {
+        'posts': result_page,  # Dữ liệu đã phân trang
+        'user': request.user,
+    }
 
+    # Render template với context đã tạo
+    rendered_html = render_to_string('ajax/get_post.html', context, request=request)
+
+    # Trả về phản hồi với HTML
+    return Response({
+        'html': rendered_html,
+        'pagination': {
+            'next': paginator.get_next_link(),
+            'previous': paginator.get_previous_link(),
+        }
+    })
 
 class PostCreateView(APIView):
     parser_classes = (MultiPartParser, FormParser)  # Để xử lý file upload
@@ -48,5 +65,35 @@ class PostCreateView(APIView):
             ImagePost.objects.create(post=post, image=image)
 
         # Trả về phản hồi với thông tin bài đăng và hình ảnh đã upload
-        serializer = CreatePostSerializer(post)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # serializer = CreatePostSerializer(post)
+        # return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        context = {'post': post, 'images': images, 'user': user}
+        rendered_html = render_to_string('ajax/created_post.html', context)
+
+        return Response({'html': rendered_html}, status=status.HTTP_201_CREATED)
+
+
+@csrf_exempt
+def add_comment(request):
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        post_id = request.POST.get('post_id')
+        user = request.user
+
+        # Tìm bài viết
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return JsonResponse({'error': 'Post not found.'}, status=404)
+
+        # Tạo comment mới
+        comment = Comment.objects.create(post=post, user=user, content=content)
+
+        # Render HTML cho comment mới
+        comment_html = render_to_string('ajax/add_comment.html', {'comment': comment})
+
+        # Trả về JSON chứa HTML của comment mới
+        return JsonResponse({'comment_html': comment_html}, status=200)
+
+    return JsonResponse({'error': 'Invalid request.'}, status=400)

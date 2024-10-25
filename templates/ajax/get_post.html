@@ -1,0 +1,125 @@
+{% load static %}
+{% for post in posts %}
+    <div class="central-meta item">
+        <div class="user-post">
+            <div class="friend-info">
+                <figure>
+                    <img src="{{ post.user.profile.avatar.url }}" alt="">
+                </figure>
+                <div class="friend-name">
+                    <div class="more">
+                        <div class="more-post-optns"><i class="ti-more-alt"></i>
+                            <ul>
+                                <li><i class="fa fa-pencil-square-o"></i>Edit Post</li>
+                                <li><i class="fa fa-trash-o"></i>Delete Post</li>
+                                <li class="bad-report"><i class="fa fa-flag"></i>Report
+                                    Post
+                                </li>
+                                <li><i class="fa fa-address-card-o"></i>Boost This Post
+                                </li>
+                                <li><i class="fa fa-clock-o"></i>Schedule Post</li>
+                                <li><i class="fa fa-wpexplorer"></i>Select as featured
+                                </li>
+                                <li><i class="fa fa-bell-slash-o"></i>Turn off
+                                    Notifications
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <ins><a href="time-line.html" title="">{{ post.user.username }}</a> Post Album
+                    </ins>
+                    <span><i class="fa fa-globe"></i> published: September,15 2020 19:PM </span>
+                </div>
+                <div class="post-meta">
+                    <p>
+                        {{ post.content }}
+                    </p>
+                    <figure>
+                        <div class="img-bunch">
+                            <div class="row">
+                                {#                                ${getAlbum(data.images) || ''}#}
+                                {% if post.images %}
+
+                                    <div class="col">
+                                        <figure>
+                                            <a href="#" title="" data-toggle="modal"
+                                               data-target="#img-comt">
+                                                <img src="{{ post.images.all.0.image.url }}"
+                                                     alt="">
+                                            </a>
+                                        </figure>
+
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </figure>
+                    <div class="we-video-info">
+                        <ul>
+
+                            <li>
+                                <div class="likes heart" title="Like/Dislike">❤
+                                    <span>{{ post.likes.count }}</span></div>
+                            </li>
+                            <li>
+                            <span class="comment" title="Comments">
+                                <i class="fa fa-commenting"></i>
+                                <ins>{{ post.comments.count }}</ins>
+                            </span>
+                            </li>
+
+                            <li>
+
+                            </li>
+                        </ul>
+
+                    </div>
+                </div>
+                <div class="coment-area">
+                    <ul class="we-comet">
+
+                        {% for comment in post.comments.all %}
+                            <li>
+                                <div class="comet-avatar">
+                                    <img src="{{ comment.user.profile.avatar.url }}"
+                                         alt="">
+                                </div>
+                                <div class="we-comment">
+                                    <h5><a href="time-line.html" title="">{{ comment.user.username }}</a>
+                                    </h5>
+                                    <p>{{ comment.content }}</p>
+                                    <div class="inline-itms">
+                                        <span>{{ comment.created_at }}</span>
+                                        
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+
+                        <li class="post-comment">
+                            <div class="comet-avatar">
+                                <img src="{{ user.profile.avatar.url }}"
+                                     alt="">
+                            </div>
+                            <div class="post-comt-box">
+                                <form class="comment-form" method="POST" >
+                                    {% csrf_token %}
+                                    <input type="hidden" name="post_id" value="{{ post.id }}">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <textarea
+                                            name="content"
+                                            placeholder="Post your comment"></textarea>
+
+
+                                    <button type="submit" style="color: black">Add</button>
+                                </form>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endfor %}
