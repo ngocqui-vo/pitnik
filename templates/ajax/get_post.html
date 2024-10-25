@@ -43,7 +43,11 @@
                                     <div class="col">
                                         <figure>
                                             <a href="#" title="" data-toggle="modal"
-                                               data-target="#img-comt">
+                                               data-target="#img-comt" class="post-image" data-images='[
+                                                    {% for image in post.images.all %}
+                                                        "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                ]'>
                                                 <img src="{{ post.images.all.0.image.url }}"
                                                      alt="">
                                             </a>
@@ -91,7 +95,7 @@
                                     <p>{{ comment.content }}</p>
                                     <div class="inline-itms">
                                         <span>{{ comment.created_at }}</span>
-                                        
+
                                     </div>
                                 </div>
                             </li>
@@ -103,7 +107,7 @@
                                      alt="">
                             </div>
                             <div class="post-comt-box">
-                                <form class="comment-form" method="POST" >
+                                <form class="comment-form" method="POST">
                                     {% csrf_token %}
                                     <input type="hidden" name="post_id" value="{{ post.id }}">
                                     <input type="hidden" name="user_id" value="{{ user.id }}">

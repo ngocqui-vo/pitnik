@@ -17633,6 +17633,18 @@ nav .main-btn{margin-left: 20px;}
     display: table-cell;
     vertical-align: middle;
 }
+.pop-item {
+    display: none; /* Initially hide all images except the first */
+}
+
+.pop-item:first-child {
+    display: block; /* Show the first image */
+}
+
+.button-container {
+    text-align: center;
+    margin-top: 10px;
+}
 .pop-item.my-auto > figure {
     display: inline-block;
     margin-bottom: 0;
