@@ -26,9 +26,9 @@
                             </ul>
                         </div>
                     </div>
-                    <ins><a href="time-line.html" title="">{{ post.user.username }}</a> Post Album
+                    <ins><a href="time-line.html" title="">{{ post.user.username }}</a>
                     </ins>
-                    <span><i class="fa fa-globe"></i> published: September,15 2020 19:PM </span>
+                    <span><i class="fa fa-globe"></i> published: {{ post.created_at }} </span>
                 </div>
                 <div class="post-meta">
                     <p>
@@ -70,10 +70,10 @@
                             </li>
 
                             <li>
-                            
+
                             </li>
                         </ul>
-                        
+
                     </div>
                 </div>
                 <div class="coment-area">
@@ -90,11 +90,8 @@
                                     </h5>
                                     <p>{{ comment.content }}</p>
                                     <div class="inline-itms">
-                                        <span>1 year ago</span>
-                                        <a class="we-reply" href="#" title="Reply"><i
-                                                class="fa fa-reply"></i></a>
-                                        <a href="#" title=""><i
-                                                class="fa fa-heart"></i><span>20</span></a>
+                                        <span>{{ comment.created_at }}</span>
+                                        
                                     </div>
                                 </div>
                             </li>
@@ -102,39 +99,20 @@
 
                         <li class="post-comment">
                             <div class="comet-avatar">
-                                <img src="{% static 'images/resources/nearly1.jpg' %}"
+                                <img src="{{ user.profile.avatar.url }}"
                                      alt="">
                             </div>
                             <div class="post-comt-box">
-                                <form method="post">
+                                <form class="comment-form" method="POST" >
+                                    {% csrf_token %}
+                                    <input type="hidden" name="post_id" value="{{ post.id }}">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
                                     <textarea
+                                            name="content"
                                             placeholder="Post your comment"></textarea>
-                                    <div class="add-smiles">
-                                        <div class="uploadimage">
-                                            <i class="fa fa-image"></i>
-                                            <label class="fileContainer">
-                                                <input type="file">
-                                            </label>
-                                        </div>
-                                        <span class="em em-expressionless"
-                                              title="add icon"></span>
-                                        <div class="smiles-bunch">
-                                            <i class="em em---1"></i>
-                                            <i class="em em-smiley"></i>
-                                            <i class="em em-anguished"></i>
-                                            <i class="em em-laughing"></i>
-                                            <i class="em em-angry"></i>
-                                            <i class="em em-astonished"></i>
-                                            <i class="em em-blush"></i>
-                                            <i class="em em-disappointed"></i>
-                                            <i class="em em-worried"></i>
-                                            <i class="em em-kissing_heart"></i>
-                                            <i class="em em-rage"></i>
-                                            <i class="em em-stuck_out_tongue"></i>
-                                        </div>
-                                    </div>
 
-                                    <button type="submit"></button>
+
+                                    <button type="submit" style="color: black">Add</button>
                                 </form>
                             </div>
                         </li>
