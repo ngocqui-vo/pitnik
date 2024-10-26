@@ -9,6 +9,7 @@ class Profile(models.Model):
     phone = models.CharField(max_length=20, default='')
     bio = models.TextField(max_length=500, default='')
     gender = models.CharField(max_length=20, default='male',choices=[('male', 'Male'), ('female', 'Female')])
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
         return self.user.username

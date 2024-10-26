@@ -4,8 +4,6 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 
-
-from .forms import UserRegisterForm, ProfileForm
 from .models import Profile, User
 
 def user_login(request):
@@ -43,11 +41,5 @@ def user_register(request):
 
     return render(request, 'account/register.html')
 
-@login_required
-def user_profile(request):
-    user = request.user
-    if user is None:
-        raise Http404('User does not exist')
-    context = {'user': user}
-    return render(request, 'account/profile.html', context=context)
+
 

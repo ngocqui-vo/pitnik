@@ -1,6 +1,4 @@
-from django.contrib.auth import logout
-from django.http import JsonResponse
-from django.middleware.csrf import get_token
+from django.http import JsonResponse, Http404
 from django.template.loader import render_to_string
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -11,9 +9,10 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from .models import Post, ImagePost, Comment, Like
-from .serializers import CreatePostSerializer, PostSerializer
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from account.models import User
+
 
 @login_required
 def index(request):
@@ -53,6 +52,7 @@ def post_list(request):
             'previous': paginator.get_previous_link(),
         }
     })
+
 
 class PostCreateView(APIView):
     parser_classes = (MultiPartParser, FormParser)  # Để xử lý file upload
@@ -119,3 +119,28 @@ class LikePostView(View):
                 like.delete()
                 return JsonResponse({'message': 'Unliked', 'liked': False, 'like_count': post.likes.count()})
         return JsonResponse({'error': 'User not authenticated'}, status=403)
+
+
+@login_required
+def user_profile(request, user_id):
+    user = User.objects.get(id=user_id)
+    if user is None:
+        raise Http404('User does not exist')
+    posts = Post.objects.filter(user=user)
+    all_images = ImagePost.objects.filter(post__in=posts)
+    context = {'user': user, 'images': all_images, 'posts': posts, 'profile': True}
+    return render(request, 'social/about.html', context=context)
+
+
+@login_required
+def user_photos(request, user_id):
+    user = User.objects.get(id=user_id)
+    if user is None:
+        raise Http404('User does not exist')
+    posts = Post.objects.filter(user=user)
+    all_images = ImagePost.objects.filter(post__in=posts).order_by('-uploaded_at')
+    sort_by = request.GET.get('sort')
+    if sort_by and sort_by == 'oldest':
+        all_images = all_images.order_by('uploaded_at')
+    context = {'user': user, 'images': all_images, 'posts': posts, 'photos': True, 'sort_by': sort_by}
+    return render(request, 'social/timeline-photos.html', context=context)
