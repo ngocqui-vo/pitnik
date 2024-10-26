@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -42,7 +43,7 @@ def user_register(request):
 
     return render(request, 'account/register.html')
 
-
+@login_required
 def user_profile(request):
     user = request.user
     if user is None:
