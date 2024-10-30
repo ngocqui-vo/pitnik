@@ -1,8 +1,12 @@
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from .forms import UserUpdateForm, ProfileUpdateForm
+from django.views import View
 
 from .models import Profile, User
 
@@ -38,8 +42,45 @@ def user_register(request):
         new_user.save()
         Profile.objects.create(user=new_user, gender=gender, phone=phone).save()
         return redirect('index')
-
     return render(request, 'account/register.html')
 
 
+class UserProfileTemplateView(LoginRequiredMixin, TemplateView):
+    template_name = 'social/about.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Lấy hoặc tạo profile cho user hiện tại
+        profile, created = Profile.objects.get_or_create(user=self.request.user)
+        context['profile'] = profile
+        return context
 
+
+
+
+class EditProfileView(LoginRequiredMixin, View):
+    template_name = 'partial/edit-profile.html'
+    
+    def get(self, request, *args, **kwargs):
+        user_form = UserUpdateForm(instance=request.user)
+        profile_form = ProfileUpdateForm(instance=request.user.profile)
+        context = {
+            'user_form': user_form,
+            'profile_form': profile_form,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        profile_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+        
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            return redirect('user-profile')  # Chuyển về trang profile sau khi lưu
+        
+        context = {
+            'user_form': user_form,
+            'profile_form': profile_form,
+        }
+        return render(request, self.template_name, context)

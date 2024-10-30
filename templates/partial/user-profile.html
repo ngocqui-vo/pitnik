@@ -1,12 +1,6 @@
 {% load static %}
 <div class="user-profile">
     <figure>
-        <div class="edit-pp">
-            <label class="fileContainer">
-                <i class="fa fa-camera"></i>
-                <input type="file">
-            </label>
-        </div>
         <img src="{{ user.profile.background_image.url }}" alt="" style="max-height: 400px">
         <ul class="profile-controls">
             <li><a href="#" title="Add friend" data-toggle="tooltip"><i class="fa fa-user-plus"></i></a></li>
@@ -35,17 +29,11 @@
                 <div class="profile-author">
                     <div class="profile-author-thumb">
                         <img alt="author" src="{{ user.profile.avatar.url }}">
-                        <div class="edit-dp">
-                            <label class="fileContainer">
-                                <i class="fa fa-camera"></i>
-                                <input type="file">
-                            </label>
-                        </div>
                     </div>
 
                     <div class="author-content">
-                        <a class="h4 author-name" href="about.html">Jack Carter</a>
-                        <div class="country">Ontario, CA</div>
+                        <a class="h4 author-name" href="{% url 'user-profile' %}">{{ profile.user.username }}</a>
+                        <div class="country">Việt Nam, Hồ Chí Minh</div>
                     </div>
                 </div>
             </div>
@@ -55,7 +43,7 @@
                         <a class="" href="timeline.html">Timeline</a>
                     </li>
                     <li>
-                        <a class="{% if profile %}active{% endif %}" href="{% url 'user_profile' user.id %}">About</a>
+                        <a class="{% if profile %}active{% endif %}" href="{% url 'user-profile' %}">About</a>
                     </li>
                     <li>
                         <a class="" href="timeline-friends.html">Friends</a>
@@ -67,17 +55,7 @@
                         <a class="" href="timeline-videos.html">Videos</a>
                     </li>
                     <li>
-                        <div class="more">
-                            <i class="fa fa-ellipsis-h"></i>
-                            <ul class="more-dropdown">
-                                <li>
-                                    <a href="timeline-groups.html">Profile Groups</a>
-                                </li>
-                                <li>
-                                    <a href="statistics.html">Profile Analytics</a>
-                                </li>
-                            </ul>
-                        </div>
+                        <a class="" href="{% url 'edit-profile' %}">Edit Profile</a>
                     </li>
                 </ul>
                 <ol class="folw-detail">
