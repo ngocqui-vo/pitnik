@@ -1,61 +1,138 @@
-<!-- partial/edit-profile.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Profile</title>
-    <!-- Link Bootstrap CSS for styling -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa Thông tin Hồ sơ</title>
+    <!-- Liên kết đến CDN Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Tùy chỉnh CSS */
+        .table {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .table th, .table td {
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+        }
+
+        .text-danger {
+            margin-top: 5px;
+        }
+        .button-container {
+            margin: 30px 0; /* Khoảng cách giữa nút và footer */
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
-        <h2 class="mb-4">Chỉnh Sửa Thông Tin Profile</h2>
-        
+        <h2 class="mb-4">Cập nhật thông tin người dùng</h2>
         <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            
             <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">Trường</th>
+                        <th scope="col">Thông tin</th>
+                    </tr>
+                </thead>
                 <tbody>
                     <tr>
-                        <th>Tên đăng nhập:</th>
-                        <td>{{ user_form.username }}</td>
+                        <td><label for="username">Tên đăng nhập</label></td>
+                        <td>
+                            {{ user_form.username }}
+                            {% if user_form.username.errors %}
+                                <div class="text-danger">{{ user_form.username.errors }}</div>
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr>
-                        <th>Email:</th>
-                        <td>{{ user_form.email }}</td>
+                        <td><label for="first_name">Họ</label></td>
+                        <td>
+                            {{ user_form.first_name }}
+                            {% if user_form.first_name.errors %}
+                                <div class="text-danger">{{ user_form.first_name.errors }}</div>
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr>
-                        <th>Avatar:</th>
-                        <td>{{ profile_form.avatar }}</td>
+                        <td><label for="last_name">Tên</label></td>
+                        <td>
+                            {{ user_form.last_name }}
+                            {% if user_form.last_name.errors %}
+                                <div class="text-danger">{{ user_form.last_name.errors }}</div>
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr>
-                        <th>Ảnh nền:</th>
-                        <td>{{ profile_form.background_image }}</td>
-                    </tr>
-                    <tr>
-                        <th>Số điện thoại:</th>
-                        <td>{{ profile_form.phone }}</td>
-                    </tr>
-                    <tr>
-                        <th>Giới thiệu:</th>
-                        <td>{{ profile_form.bio }}</td>
-                    </tr>
-                    <tr>
-                        <th>Giới tính:</th>
-                        <td>{{ profile_form.gender }}</td>
+                        <td><label for="email">Email</label></td>
+                        <td>
+                            {{ user_form.email }}
+                            {% if user_form.email.errors %}
+                                <div class="text-danger">{{ user_form.email.errors }}</div>
+                            {% endif %}
+                        </td>
                     </tr>
                 </tbody>
             </table>
-            
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary me-2">Lưu Thay Đổi</button>
-                <a href="{% url 'user-profile' %}" class="btn btn-secondary">Quay lại</a>
+
+            <h2 class="mb-4">Cập nhật thông tin hồ sơ</h2>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">Trường</th>
+                        <th scope="col">Thông tin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><label for="avatar">Avatar</label></td>
+                        <td>
+                            {{ profile_form.avatar }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="background_image">Ảnh nền</label></td>
+                        <td>
+                            {{ profile_form.background_image }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="phone">Số điện thoại</label></td>
+                        <td>
+                            {{ profile_form.phone }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="bio">Giới thiệu</label></td>
+                        <td>
+                            {{ profile_form.bio }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="gender">Giới tính</label></td>
+                        <td>
+                            {{ profile_form.gender }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="text-center button-container">
+                <button type="submit" class="btn btn-primary btn-lg me-2">Lưu Thay Đổi</button>
+                <a href="{% url 'user-profile' %}" class="btn btn-secondary btn-lg">Huỷ</a>
             </div>
         </form>
     </div>
-    <!-- Link Bootstrap JS and dependencies (Optional) -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
+
+    <!-- Liên kết đến CDN Bootstrap JS và Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
-

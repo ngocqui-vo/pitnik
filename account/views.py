@@ -7,7 +7,6 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserUpdateForm, ProfileUpdateForm
 from django.views import View
-
 from .models import Profile, User
 
 def user_login(request):
@@ -77,7 +76,7 @@ class EditProfileView(LoginRequiredMixin, View):
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            return redirect('user-profile')  # Chuyển về trang profile sau khi lưu
+            return redirect('user-profile')
         
         context = {
             'user_form': user_form,
