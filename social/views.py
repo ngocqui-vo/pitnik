@@ -8,8 +8,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, ImagePost, Comment, Like
-from django.shortcuts import render
+from .models import Post, ImagePost, Comment, Like, Friendship, Notification
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from account.models import User
 
@@ -144,3 +144,62 @@ def user_photos(request, user_id):
         all_images = all_images.order_by('uploaded_at')
     context = {'user': user, 'images': all_images, 'posts': posts, 'photos': True, 'sort_by': sort_by}
     return render(request, 'social/timeline-photos.html', context=context)
+
+
+@login_required
+def send_friend_request(request, user_id):
+    receiver = get_object_or_404(User, id=user_id)
+    if request.user != receiver:
+        friendship, created = Friendship.objects.get_or_create(
+            sender=request.user,
+            receiver=receiver,
+            defaults={'status': 'pending'}
+        )
+        if created:
+            Notification.objects.create(
+                recipient=receiver,
+                notification_type='friend_request',
+                content=f'{request.user.username} sent you a friend request'
+            )
+            return JsonResponse({'status': 'success', 'message': 'Friend request sent.'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Friend request already sent.'})
+    return JsonResponse({'status': 'error', 'message': 'You cannot send a friend request to yourself.'})
+
+
+@login_required
+def respond_to_friend_request(request, friendship_id, action):
+    friendship = get_object_or_404(Friendship, id=friendship_id, receiver=request.user)
+    if action == 'accept':
+        friendship.status = 'accepted'
+        friendship.save()
+        Notification.objects.create(
+            recipient=friendship.sender,
+            notification_type='friend_request',
+            content=f'{request.user.username} accepted your friend request'
+        )
+        return JsonResponse({'status': 'success', 'message': 'Friend request accepted.'})
+    elif action == 'reject':
+        friendship.status = 'rejected'
+        friendship.save()
+        return JsonResponse({'status': 'success', 'message': 'Friend request rejected.'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid action.'})
+
+
+@login_required
+def friend_requests(request):
+    requests = Friendship.objects.filter(receiver=request.user, status='pending')
+    return JsonResponse({
+        'friend_requests': [{'sender': fr.sender.username, 'id': fr.id} for fr in requests]
+    })
+
+
+@login_required
+def user_notifications(request, user_id):
+    user = User.objects.get(id=user_id)
+    if not request.user.is_authenticated and user != request.user:
+        return JsonResponse({'error': 'User not authenticated'}, status=403)
+    notifications = Notification.objects.filter(recipient=request.user)
+    return render(request, 'social/notifications.html', context={'notifications': notifications, 'posts': user.posts.all()})
+
+

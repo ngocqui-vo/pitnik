@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/color.css' %}">
     <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+
     {#    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">#}
 
 </head>
@@ -670,6 +671,10 @@
 {#	<script src="{% static 'js/page-tourintro.js' %}"></script>#}
 {#	<script src="{% static 'js/page-tour-init.js' %}"></script>#}
 <script src="{% static 'js/script.js' %}"></script>
+<script>
+        window.csrftoken = '{{ csrf_token }}';
+    </script>
+<script src="{% static 'js/my.js' %}"></script>
 {#    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>#}
 
 {% block scripts %}

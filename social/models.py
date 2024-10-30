@@ -67,6 +67,7 @@ class Message(models.Model):
 
 
 class Notification(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     notification_type = models.CharField(max_length=20, choices=[('friend_request', 'Friend Request'), ('new_message', 'New Message')])
     content = models.TextField()

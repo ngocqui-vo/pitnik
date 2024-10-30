@@ -26,7 +26,7 @@
                             </ul>
                         </div>
                     </div>
-                    <ins><a href="time-line.html" title="">{{ post.user.username }}</a>
+                    <ins><a href="{% url 'user_profile' post.user.id %}" title="">{{ post.user.username }}</a>
                     </ins>
                     <span><i class="fa fa-globe"></i> published: {{ post.created_at }} </span>
                 </div>
@@ -37,9 +37,7 @@
                     <figure>
                         <div class="img-bunch">
                             <div class="row">
-                                {#                                ${getAlbum(data.images) || ''}#}
                                 {% if post.images %}
-
                                     <div class="col">
                                         <figure>
                                             <a href="#" title="" data-toggle="modal"

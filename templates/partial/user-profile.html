@@ -9,7 +9,7 @@
         </div>
         <img src="{{ user.profile.background_image.url }}" alt="" style="max-height: 400px">
         <ul class="profile-controls">
-            <li><a href="#" title="Add friend" data-toggle="tooltip"><i class="fa fa-user-plus"></i></a></li>
+            <li><a href="#" title="Add friend" class="send-friend-request-btn" data-user-id="{{ user.id }}" data-toggle="tooltip"><i class="fa fa-user-plus"></i></a></li>
             <li><a href="#" title="Follow" data-toggle="tooltip"><i class="fa fa-star"></i></a></li>
             <li><a class="send-mesg" href="#" title="Send Message" data-toggle="tooltip"><i
                     class="fa fa-comment"></i></a></li>
@@ -64,7 +64,7 @@
                         <a class="{% if photos %}active{% endif %}" href="{% url 'user_photos' user.id %}">Photos</a>
                     </li>
                     <li>
-                        <a class="" href="timeline-videos.html">Videos</a>
+                        <a class="" href="{% url 'user_notifications' user.id %}">Notifications</a>
                     </li>
                     <li>
                         <div class="more">
