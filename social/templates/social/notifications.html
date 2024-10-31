@@ -27,7 +27,13 @@
                                                         </figure>
                                                         <div class="notifi-meta">
                                                             <p>{{ notification.content }}</p>
-                                                            <span><i class="{% if notification.notification_type == 'friend_request' %}fa fa-user {% else %}fa fa-comment{% endif %}"></i>{{ notification.created_at|timesince_filter }}</span>
+                                                            <span><i class="{% if notification.notification_type == 'friend_request' %}fa fa-user {% else %}fa fa-comment{% endif %}"></i> {{ notification.created_at|timesince_filter }} ago</span>
+                                                            {% if notification.notification_type == 'friend_request' and not notification.is_actioned %}
+                                                            	<div class="mt-3 friend-request" data-sender-id="{{ notification.sender.id }}">
+                                                                    <a href="" class="btn btn-primary accept-friend-request">Accept</a>
+                                                                    <a href="" class="btn btn-danger reject-friend-request">Reject</a>
+                                                                </div>
+                                                            {% endif %}
                                                         </div>
                                                         <div class="more">
                                                             <div class="more-post-optns"><i class="ti-more-alt"></i>
@@ -155,4 +161,54 @@
         </div>
     </section>
 
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $(document).ready(function () {
+            // Xử lý yêu cầu chấp nhận kết bạn
+            $('.accept-friend-request').on('click', function (event) {
+                event.preventDefault();
+
+                let requestId = $(this).closest('.friend-request').data('sender-id');
+
+                $.ajax({
+                    url: `/respond-to-friend-request/${requestId}/accept/`,
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function (response) {
+                        alert(response.message);
+                        $(`.friend-request[data-sender-id="${requestId}"]`).remove(); // Xóa yêu cầu khỏi danh sách
+                    },
+                    error: function (xhr) {
+                        alert('Có lỗi xảy ra, vui lòng thử lại.');
+                    }
+                });
+            });
+
+            // Xử lý yêu cầu từ chối kết bạn
+            $('.reject-friend-request').on('click', function (event) {
+                event.preventDefault();
+
+                let requestId = $(this).closest('.friend-request').data('sender-id');
+
+                $.ajax({
+                    url: `/respond-to-friend-request/${requestId}/reject/`,
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function (response) {
+                        alert(response.message);
+                        $(`.friend-request[data-sender-id="${requestId}"]`).remove(); // Xóa yêu cầu khỏi danh sách
+                    },
+                    error: function (xhr) {
+                        alert('Có lỗi xảy ra, vui lòng thử lại.');
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}

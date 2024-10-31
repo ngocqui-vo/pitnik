@@ -128,7 +128,16 @@ def user_profile(request, user_id):
         raise Http404('User does not exist')
     posts = Post.objects.filter(user=user)
     all_images = ImagePost.objects.filter(post__in=posts)
-    context = {'user': user, 'images': all_images, 'posts': posts, 'profile': True}
+    add_friend = True
+    if (user == request.user
+            or user.sent_friend_requests.filter(receiver=request.user).exists()
+            or request.user.sent_friend_requests.filter(receiver=user).exists())\
+            or user.received_friend_requests.filter(receiver=request.user).exists()\
+            or request.user.received_friend_requests.filter(receiver=user).exists():
+        add_friend = False
+
+
+    context = {'user': user, 'images': all_images, 'posts': posts, 'profile': True, 'add_friend': add_friend}
     return render(request, 'social/about.html', context=context)
 
 
@@ -157,6 +166,7 @@ def send_friend_request(request, user_id):
         )
         if created:
             Notification.objects.create(
+                sender=request.user,
                 recipient=receiver,
                 notification_type='friend_request',
                 content=f'{request.user.username} sent you a friend request'
@@ -168,15 +178,20 @@ def send_friend_request(request, user_id):
 
 
 @login_required
-def respond_to_friend_request(request, friendship_id, action):
-    friendship = get_object_or_404(Friendship, id=friendship_id, receiver=request.user)
+def respond_to_friend_request(request, sender_id, action):
+    sender = get_object_or_404(User, id=sender_id)
+    friendship = get_object_or_404(Friendship, sender=sender, receiver=request.user)
+    notification = get_object_or_404(Notification, sender=sender, recipient=request.user)
+    notification.is_actioned = True
+    notification.save()
     if action == 'accept':
         friendship.status = 'accepted'
         friendship.save()
         Notification.objects.create(
+            sender=request.user,
             recipient=friendship.sender,
-            notification_type='friend_request',
-            content=f'{request.user.username} accepted your friend request'
+            notification_type='friend_request_accepted',
+            content=f'{request.user.first_name} {request.user.last_name} accepted your friend request'
         )
         return JsonResponse({'status': 'success', 'message': 'Friend request accepted.'})
     elif action == 'reject':

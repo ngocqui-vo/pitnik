@@ -12,7 +12,7 @@ urlpatterns = [
     path('api/comment/add_comment/', views.add_comment, name='add_comment'),
     path('like/<int:post_id>/', views.LikePostView.as_view(), name='like_post'),
     path('send-friend-request/<int:user_id>/', views.send_friend_request, name='send_friend_request'),
-    path('respond-to-friend-request/<int:friendship_id>/<str:action>/', views.respond_to_friend_request, name='respond_to_friend_request'),
+    path('respond-to-friend-request/<int:sender_id>/<str:action>/', views.respond_to_friend_request, name='respond_to_friend_request'),
     path('friend-requests/', views.friend_requests, name='friend_requests'),
 
 ]

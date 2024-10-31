@@ -1,3 +1,4 @@
+{% load custom_filters %}
 {% load static %}
 {% for post in posts %}
     <div class="central-meta item">
@@ -94,7 +95,7 @@
                                     </h5>
                                     <p>{{ comment.content }}</p>
                                     <div class="inline-itms">
-                                        <span>{{ comment.created_at }}</span>
+                                        <span>{{ comment.created_at|timesince_filter }} ago</span>
 
                                     </div>
                                 </div>
