@@ -5,8 +5,6 @@
 {% endblock %}
 
 {% block content %}
-
-
     <section>
         <div class="gap2 gray-bg">
             <div class="container">
@@ -27,7 +25,7 @@
                                                         </figure>
                                                         <div class="notifi-meta">
                                                             <p>{{ notification.content }}</p>
-                                                            <span><i class="{% if notification.notification_type == 'friend_request' %}fa fa-user {% else %}fa fa-comment{% endif %}"></i> {{ notification.created_at|timesince_filter }} ago</span>
+                                                            <span><i class="{% if notification.notification_type == 'friend_request' or notification.notification_type == 'friend_request_accepted' %}fa fa-user {% else %}fa fa-comment{% endif %}"></i> {{ notification.created_at|timesince_filter }} ago</span>
                                                             {% if notification.notification_type == 'friend_request' and not notification.is_actioned %}
                                                             	<div class="mt-3 friend-request" data-sender-id="{{ notification.sender.id }}">
                                                                     <a href="" class="btn btn-primary accept-friend-request">Accept</a>
@@ -160,7 +158,6 @@
             </div>
         </div>
     </section>
-
 {% endblock %}
 
 {% block scripts %}
@@ -179,7 +176,6 @@
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
                     success: function (response) {
-                        alert(response.message);
                         $(`.friend-request[data-sender-id="${requestId}"]`).remove(); // Xóa yêu cầu khỏi danh sách
                     },
                     error: function (xhr) {
@@ -201,7 +197,6 @@
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
                     success: function (response) {
-                        alert(response.message);
                         $(`.friend-request[data-sender-id="${requestId}"]`).remove(); // Xóa yêu cầu khỏi danh sách
                     },
                     error: function (xhr) {

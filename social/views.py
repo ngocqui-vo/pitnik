@@ -1,3 +1,4 @@
+from asgiref.sync import async_to_sync
 from django.http import JsonResponse, Http404
 from django.template.loader import render_to_string
 from django.views import View
@@ -12,6 +13,7 @@ from .models import Post, ImagePost, Comment, Like, Friendship, Notification
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from account.models import User
+from channels.layers import get_channel_layer
 
 
 @login_required
@@ -131,9 +133,9 @@ def user_profile(request, user_id):
     add_friend = True
     if (user == request.user
             or user.sent_friend_requests.filter(receiver=request.user).exists()
-            or request.user.sent_friend_requests.filter(receiver=user).exists())\
-            or user.received_friend_requests.filter(receiver=request.user).exists()\
-            or request.user.received_friend_requests.filter(receiver=user).exists():
+            or request.user.sent_friend_requests.filter(receiver=user).exists()
+            or user.received_friend_requests.filter(receiver=request.user).exists()
+            or request.user.received_friend_requests.filter(receiver=user).exists()):
         add_friend = False
 
 
@@ -151,7 +153,14 @@ def user_photos(request, user_id):
     sort_by = request.GET.get('sort')
     if sort_by and sort_by == 'oldest':
         all_images = all_images.order_by('uploaded_at')
-    context = {'user': user, 'images': all_images, 'posts': posts, 'photos': True, 'sort_by': sort_by}
+    add_friend = True
+    if (user == request.user
+            or user.sent_friend_requests.filter(receiver=request.user).exists()
+            or request.user.sent_friend_requests.filter(receiver=user).exists()
+            or user.received_friend_requests.filter(receiver=request.user).exists()
+            or request.user.received_friend_requests.filter(receiver=user).exists()):
+        add_friend = False
+    context = {'user': user, 'images': all_images, 'posts': posts, 'photos': True, 'sort_by': sort_by, 'add_friend': add_friend}
     return render(request, 'social/timeline-photos.html', context=context)
 
 
@@ -170,6 +179,20 @@ def send_friend_request(request, user_id):
                 recipient=receiver,
                 notification_type='friend_request',
                 content=f'{request.user.username} sent you a friend request'
+            )
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"user_{receiver.id}",
+                {
+                    "type": "notification_message",
+                    "notification": {
+                        "sender": request.user.username,
+                        "content": f"{request.user.username} has sent you a friend request.",
+                        "avatar": f'{request.user.profile.avatar.url}',
+                        "fullname": f'{request.user.first_name} {request.user.last_name}',
+                        "is_read": False
+                    }
+                }
             )
             return JsonResponse({'status': 'success', 'message': 'Friend request sent.'})
         else:
@@ -193,6 +216,20 @@ def respond_to_friend_request(request, sender_id, action):
             notification_type='friend_request_accepted',
             content=f'{request.user.first_name} {request.user.last_name} accepted your friend request'
         )
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{sender.id}",
+            {
+                "type": "notification_message",
+                "notification": {
+                    "sender": request.user.username,
+                    "content": f"{request.user.first_name} {request.user.last_name} has accepted your friend request.",
+                    "avatar": f'{request.user.profile.avatar.url}',
+                    "fullname": f'{request.user.first_name} {request.user.last_name}',
+                    "is_read": False
+                }
+            }
+        )
         return JsonResponse({'status': 'success', 'message': 'Friend request accepted.'})
     elif action == 'reject':
         friendship.status = 'rejected'
@@ -215,6 +252,9 @@ def user_notifications(request, user_id):
     if not request.user.is_authenticated and user != request.user:
         return JsonResponse({'error': 'User not authenticated'}, status=403)
     notifications = Notification.objects.filter(recipient=request.user)
+    for notification in notifications:
+        notification.is_read = True
+        notification.save()
     return render(request, 'social/notifications.html', context={'notifications': notifications, 'posts': user.posts.all()})
 
 

@@ -13,6 +13,7 @@ $(document).ready(function () {
             },
             success: function (response) {
                 $('#notification-area').html(`<p>${response.message}</p>`);
+                $('.send-friend-request-btn').remove()
             },
             error: function (xhr) {
                 $('#notification-area').html(`<p>${xhr.responseJSON.message}</p>`);
@@ -20,3 +21,4 @@ $(document).ready(function () {
         });
     });
 });
+
