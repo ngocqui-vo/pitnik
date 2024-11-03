@@ -274,9 +274,12 @@ def room(request, username1, username2):
     # Lấy danh sách tin nhắn trong phòng
     messages = Message.objects.filter(room=room).order_by('timestamp')
 
+    target_user = user1 if request.user != user1 else user2
+
     return render(request, 'social/chat-messenger.html', {
         'room': room,
         'messages': messages,
         'user1': user1,
         'user2': user2,
+        'target_user': target_user,
     })
