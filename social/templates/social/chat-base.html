@@ -255,25 +255,6 @@
 
     {% include 'partial/header.html' %}
 
-    <div class="fixed-sidebar right">
-        <div class="chat-friendz">
-            <ul class="chat-users">
-                {% for friend in friends %}
-                	<li>
-                        <a href="{% url 'room' request.user.username friend.username %}" style="width: 100%; height: 100%; display: inline-block">
-                            <div class="author-thmb" id="{{ friend.username }}">
-                            <img src="{{ friend.profile.avatar.url }}" alt="">
-                            <span class="status f-online"></span>
-                            </div>
-                        </a>
-                    </li>
-                {% endfor %}
-
-
-            </ul>
-
-        </div>
-    </div><!-- right sidebar user chat -->
 
     {% block content %}
 

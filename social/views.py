@@ -9,7 +9,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, ImagePost, Comment, Like, Friendship, Notification
+from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from account.models import User
@@ -258,3 +258,25 @@ def user_notifications(request, user_id):
     return render(request, 'social/notifications.html', context={'notifications': notifications, 'posts': user.posts.all()})
 
 
+@login_required
+def room(request, username1, username2):
+    # Lấy user1 và user2 dựa vào username
+    user1 = get_object_or_404(User, username=username1)
+    user2 = get_object_or_404(User, username=username2)
+
+    # Sắp xếp để tránh lặp phòng, chỉ cần (user1, user2) theo thứ tự nhất định
+    if user1.id > user2.id:
+        user1, user2 = user2, user1
+
+    # Tạo hoặc lấy phòng chat cho cặp user1 và user2
+    room, created = Room.objects.get_or_create(user1=user1, user2=user2)
+
+    # Lấy danh sách tin nhắn trong phòng
+    messages = Message.objects.filter(room=room).order_by('timestamp')
+
+    return render(request, 'social/chat-messenger.html', {
+        'room': room,
+        'messages': messages,
+        'user1': user1,
+        'user2': user2,
+    })
