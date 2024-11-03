@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib.auth.models import User
-from .models import Notification, Friendship
+from .models import Notification, Friendship, Room
 
 
 def get_unread_notifications_count(request):
@@ -38,3 +38,15 @@ def get_friends(request):
         return {'friends': friends}
     else:
         return {'friends': []}
+
+
+def get_rooms(request):
+    if request.user.is_authenticated:
+        rooms = Room.objects.filter(Q(user1=request.user) | Q(user2=request.user))
+        rooms = [room for room in rooms if room.messages.count() > 0]
+        for room in rooms:
+            room.latest_message = room.messages.order_by('-timestamp')[0]
+            room.target_user = room.user1 if request.user != room.user1 else room.user2
+        return {'rooms': rooms}
+    else:
+        return {'rooms': []}
