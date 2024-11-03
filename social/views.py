@@ -10,11 +10,12 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from account.models import User
 from channels.layers import get_channel_layer
-
+from .forms import PostForm
+from django.contrib import messages
 
 @login_required
 def index(request):
@@ -55,6 +56,48 @@ def post_list(request):
         }
     })
 
+
+@login_required
+def edit_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id, user=request.user)
+    images = ImagePost.objects.filter(post=post)
+
+
+    if request.method == 'POST':
+        form = PostForm(request.POST, instance=post)
+        if form.is_valid():
+            form.save()
+
+            # Xóa ảnh nếu có yêu cầu xóa
+            images_to_delete = request.POST.getlist('images_to_delete')
+            if images_to_delete:
+                ImagePost.objects.filter(id__in=images_to_delete).delete()
+
+            # Thêm ảnh mới nếu có
+            new_images = request.FILES.getlist('images')
+            for image in new_images:
+                ImagePost.objects.create(post=post, image=image)
+
+            return redirect('index')  # Điều hướng về trang chi tiết bài đăng sau khi chỉnh sửa
+
+    else:
+        form = PostForm(instance=post)
+
+    return render(request, 'social/edit_post.html', {'form': form, 'post': post, 'images': images})
+
+
+@login_required
+def delete_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+
+    # Kiểm tra xem người dùng có quyền xóa bài đăng không
+    if request.user == post.user:
+        post.delete()
+        messages.success(request, "Post deleted successfully.")
+    else:
+        messages.error(request, "You do not have permission to delete this post.")
+
+    return redirect('index')
 
 class PostCreateView(APIView):
     parser_classes = (MultiPartParser, FormParser)  # Để xử lý file upload

@@ -1,0 +1,53 @@
+{% extends './base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}
+
+{% endblock %}
+
+{% block content %}
+	<div class="container mt-5">
+        <h1 class="text-center mb-4">Edit Post</h1>
+
+        <form method="post" enctype="multipart/form-data" class="bg-light p-4 rounded shadow-sm">
+            {% csrf_token %}
+
+            <!-- Nội dung bài đăng -->
+            <div class="form-group">
+                <label for="content">Content:</label>
+                {{ form.content|add_class:"form-control" }}
+            </div>
+
+            <!-- Hình ảnh hiện tại -->
+            <h5 class="mt-4">Current Images</h5>
+            <div class="row">
+                {% for image in images %}
+                    <div class="col-md-3 mb-3">
+                        <div class="card">
+                            <img src="{{ image.image.url }}" class="card-img-top" alt="Image" style="height: 150px; object-fit: cover;">
+                            <div class="card-body text-center">
+                                <label class="d-flex align-items-center justify-content-center">
+                                    <input type="checkbox" name="images_to_delete" value="{{ image.id }}" class="mr-2">
+                                    Delete
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Thêm hình ảnh mới -->
+            <div class="form-group mt-4">
+                <label for="images">Add New Images:</label>
+                <input type="file" name="images" id="images" class="form-control-file" multiple>
+                <small class="form-text text-muted">You can select multiple images to upload.</small>
+            </div>
+
+            <!-- Nút lưu và hủy -->
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
