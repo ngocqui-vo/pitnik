@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 
 from .models import Profile, User
 
+
 def user_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')

@@ -14,6 +14,7 @@ urlpatterns = [
     path('send-friend-request/<int:user_id>/', views.send_friend_request, name='send_friend_request'),
     path('respond-to-friend-request/<int:sender_id>/<str:action>/', views.respond_to_friend_request, name='respond_to_friend_request'),
     path('friend-requests/', views.friend_requests, name='friend_requests'),
+    path('chat/<str:username1>/<str:username2>/', views.room, name='room'),
 
 ]
 

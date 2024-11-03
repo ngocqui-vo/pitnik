@@ -70,6 +70,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'social.context_processors.get_unread_notifications_count',
                 'social.context_processors.get_notifications',
+                'social.context_processors.get_friends',
             ],
         },
     },

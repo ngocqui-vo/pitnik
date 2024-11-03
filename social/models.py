@@ -1,3 +1,4 @@
+import shortuuid
 from django.db import models
 from account.models import User
 
@@ -56,14 +57,25 @@ class Follow(models.Model):
     def __str__(self):
         return f'{self.user.username} - {self.following.username}'
 
+
+class Room(models.Model):
+    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_user1')
+    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_user2')
+
+    def __str__(self):
+        return f'Chat between {self.user1.username} and {self.user2.username}'
+
+    class Meta:
+        unique_together = ('user1', 'user2')  # Đảm bảo mỗi cặp user chỉ có một phòng chat
+
 class Message(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='messages')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='messages')
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.sender.username} - {self.receiver.username} - {self.content}'
+        return f'{self.user.username} - {self.content}'
 
 
 class Notification(models.Model):
