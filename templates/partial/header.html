@@ -3,14 +3,18 @@
 		<div class="logo">
 			<a title="" href="newsfeed.html"><img src="{% static 'images/logo.png' %}" alt=""></a>
 		</div>
-		<div class="top-area">
 
+		<!--Thanh tìm kiếm-->
+		<div class="top-area">
 			<div class="top-search">
-				<form method="post" class="">
-					<input type="text" placeholder="Search People, Pages, Groups etc">
-					<button data-ripple><i class="ti-search"></i></button>
+				<form method="get" action="{% url 'search' %}">
+					{% csrf_token %}
+					<input type="text" name="q" placeholder="Search People, Pages, Groups etc">
+					<button type="submit" data-ripple><i class="ti-search"></i></button>
 				</form>
 			</div>
+
+
 			<div class="page-name">
 			    <span>Newsfeed</span>
 			 </div>
@@ -285,7 +289,7 @@
 					</ul>
 					<span class="seting-title">User setting <a href="#" title="">see all</a></span>
 					<ul class="log-out">
-						<li><a href="{% url 'user-profile' %}" title=""><i class="ti-user"></i> view profile</a></li>
+						<li><a href="{% url 'user-profile' user.id %}" title=""><i class="ti-user"></i> view profile</a></li>
 						<li><a href="#" title=""><i class="ti-target"></i>activity log</a></li>
 						<li><a href="setting.html" title=""><i class="ti-settings"></i>account setting</a></li>
 						<li><a href="{% url 'user_logout' %}" title=""><i class="ti-power-off"></i>log out</a></li>

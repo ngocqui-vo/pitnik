@@ -126,7 +126,7 @@
 
             <div class="text-center button-container">
                 <button type="submit" class="btn btn-primary btn-lg me-2">Lưu Thay Đổi</button>
-                <a href="{% url 'user-profile' %}" class="btn btn-secondary btn-lg">Huỷ</a>
+                <a href="{% url 'user-profile' user.id %}" class="btn btn-secondary btn-lg">Huỷ</a>
             </div>
         </form>
     </div>

@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.shortcuts import render, redirect
@@ -8,6 +9,8 @@ from django.contrib.auth import authenticate, login, logout
 from .forms import UserUpdateForm, ProfileUpdateForm
 from django.views import View
 from .models import Profile, User
+from django.db.models import Q
+from social.models import Post
 
 def user_login(request):
     if request.method == 'POST':
@@ -46,11 +49,11 @@ def user_register(request):
 
 class UserProfileTemplateView(LoginRequiredMixin, TemplateView):
     template_name = 'social/about.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Lấy hoặc tạo profile cho user hiện tại
-        profile, created = Profile.objects.get_or_create(user=self.request.user)
+        user_id = self.kwargs.get('user_id')  # Lấy user_id từ URL
+        profile = get_object_or_404(Profile, user__id=user_id)  # Lấy profile dựa trên user_id
         context['profile'] = profile
         return context
 
@@ -76,10 +79,35 @@ class EditProfileView(LoginRequiredMixin, View):
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            return redirect('user-profile')
+            # Chuyển hướng đến trang profile của người dùng
+            return redirect('user-profile', user_id=request.user.id)
         
         context = {
             'user_form': user_form,
             'profile_form': profile_form,
         }
         return render(request, self.template_name, context)
+
+def search(request):
+    query = request.GET.get('q', '').strip()
+    if not query:  # Nếu query rỗng
+        return render(request, 'social/search-result.html', {'users': [], 'posts': [], 'query': query})
+
+    # User search: first_name, last_name, and full name matches
+    users = Profile.objects.filter(
+        Q(user__first_name__icontains=query) |
+        Q(user__last_name__icontains=query) |
+        Q(user__first_name__icontains=query.split()[0]) & 
+        Q(user__last_name__icontains=query.split()[-1]) |
+        Q(user__first_name__icontains=query) & Q(user__last_name__icontains=query)
+    )
+    
+    # Post search based on content
+    posts = Post.objects.filter(content__icontains=query)
+
+    # Render results to the template
+    return render(request, 'social/search-result.html', {
+        'users': users,
+        'posts': posts,
+        'query': query
+    })

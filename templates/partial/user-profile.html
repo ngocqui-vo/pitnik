@@ -32,7 +32,7 @@
                     </div>
 
                     <div class="author-content">
-                        <a class="h4 author-name" href="{% url 'user-profile' %}">{{ user.first_name }} {{ user.last_name }}</a>
+                        <a class="h4 author-name" href="{% url 'user-profile' user.id %}">{{ user.first_name }} {{ user.last_name }}</a>
                         <div class="country">Việt Nam, Hồ Chí Minh</div>
                     </div>
                 </div>
@@ -43,7 +43,7 @@
                         <a class="" href="timeline.html">Timeline</a>
                     </li>
                     <li>
-                        <a class="{% if profile %}active{% endif %}" href="{% url 'user-profile' %}">About</a>
+                        <a class="{% if profile %}active{% endif %}" href="{% url 'user-profile' user.id %}">About</a>
                     </li>
                     <li>
                         <a class="" href="timeline-friends.html">Friends</a>

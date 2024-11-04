@@ -39,7 +39,6 @@
                             <div class="row">
                                 {#                                ${getAlbum(data.images) || ''}#}
                                 {% if post.images %}
-
                                     <div class="col">
                                         <figure>
                                             <a href="#" title="" data-toggle="modal"
@@ -52,7 +51,6 @@
                                                      alt="">
                                             </a>
                                         </figure>
-
                                     </div>
                                 {% endif %}
                             </div>
@@ -61,7 +59,6 @@
                     </figure>
                     <div class="we-video-info">
                         <ul>
-
                             <li>
                                 <div class="likes heart {% if post.id in liked_posts_ids %}happy{% endif %}"
                                      title="Like/Dislike" data-post-id="{{ post.id }}">
@@ -74,9 +71,7 @@
                                 <ins>{{ post.comments.count }}</ins>
                             </span>
                             </li>
-
                             <li>
-
                             </li>
                         </ul>
 
@@ -84,7 +79,6 @@
                 </div>
                 <div class="coment-area">
                     <ul class="we-comet">
-
                         {% for comment in post.comments.all %}
                             <li>
                                 <div class="comet-avatar">
@@ -97,12 +91,10 @@
                                     <p>{{ comment.content }}</p>
                                     <div class="inline-itms">
                                         <span>{{ comment.created_at }}</span>
-
                                     </div>
                                 </div>
                             </li>
                         {% endfor %}
-
                         <li class="post-comment">
                             <div class="comet-avatar">
                                 <img src="{{ user.profile.avatar.url }}"
@@ -116,8 +108,6 @@
                                     <textarea
                                             name="content"
                                             placeholder="Post your comment"></textarea>
-
-
                                     <button type="submit" style="color: black">Add</button>
                                 </form>
                             </div>
@@ -125,7 +115,6 @@
                     </ul>
                 </div>
             </div>
-
         </div>
     </div>
 {% endfor %}
