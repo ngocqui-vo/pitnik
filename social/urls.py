@@ -8,6 +8,8 @@ urlpatterns = [
     path('posts/delete/<int:post_id>/', views.delete_post, name='delete_post'),
     path('user/profile/<int:user_id>/', views.user_profile, name='user_profile'),
     path('user/photos/<int:user_id>/', views.user_photos, name='user_photos'),
+    path('user/friend-timeline/<int:user_id>/', views.friend_timeline, name='friend_timeline'),
+    path('user/unfriend/<int:user_id>/', views.unfriend, name='unfriend_user'),
     path('user/notifications/<int:user_id>/', views.user_notifications, name='user_notifications'),
     path('api/posts/', views.post_list, name='post_list'),
     path('create_post_with_images/', views.PostCreateView.as_view(), name='create_post_with_images'),
@@ -16,6 +18,7 @@ urlpatterns = [
     path('send-friend-request/<int:user_id>/', views.send_friend_request, name='send_friend_request'),
     path('respond-to-friend-request/<int:sender_id>/<str:action>/', views.respond_to_friend_request, name='respond_to_friend_request'),
     path('friend-requests/', views.friend_requests, name='friend_requests'),
+
     path('chat/<str:username1>/<str:username2>/', views.room, name='room'),
 
 ]

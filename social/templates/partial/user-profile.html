@@ -60,14 +60,12 @@
                         <a class="{% if profile %}active{% endif %}" href="{% url 'user_profile' user.id %}">About</a>
                     </li>
                     <li>
-                        <a class="" href="timeline-friends.html">Friends</a>
+                        <a class="{% if friend_page %}active{% endif %}" href="{% url 'friend_timeline' user.id %}">Friends</a>
                     </li>
                     <li>
                         <a class="{% if photos %}active{% endif %}" href="{% url 'user_photos' user.id %}">Photos</a>
                     </li>
-                    <li>
-                        <a class="" href="{% url 'user_notifications' user.id %}">Notifications</a>
-                    </li>
+
                     <li>
                         <div class="more">
                             <i class="fa fa-ellipsis-h"></i>

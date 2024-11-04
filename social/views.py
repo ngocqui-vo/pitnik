@@ -1,4 +1,5 @@
 from asgiref.sync import async_to_sync
+from django.db.models import Q
 from django.http import JsonResponse, Http404
 from django.template.loader import render_to_string
 from django.views import View
@@ -247,7 +248,8 @@ def send_friend_request(request, user_id):
 def respond_to_friend_request(request, sender_id, action):
     sender = get_object_or_404(User, id=sender_id)
     friendship = get_object_or_404(Friendship, sender=sender, receiver=request.user)
-    notification = get_object_or_404(Notification, sender=sender, recipient=request.user)
+    notification = Notification.objects.filter(sender=sender, recipient=request.user).order_by('-created_at').first()
+    # notification = get_object_or_404(Notification, sender=sender, recipient=request.user)
     notification.is_actioned = True
     notification.save()
     if action == 'accept':
@@ -294,11 +296,16 @@ def user_notifications(request, user_id):
     user = User.objects.get(id=user_id)
     if not request.user.is_authenticated and user != request.user:
         return JsonResponse({'error': 'User not authenticated'}, status=403)
-    notifications = Notification.objects.filter(recipient=request.user)
+    notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')
     for notification in notifications:
         notification.is_read = True
         notification.save()
-    return render(request, 'social/notifications.html', context={'notifications': notifications, 'posts': user.posts.all()})
+    context = {
+        'notifications': notifications,
+        'posts': user.posts.all(),
+        'user': user,
+    }
+    return render(request, 'social/notifications.html', context=context)
 
 
 @login_required
@@ -326,3 +333,37 @@ def room(request, username1, username2):
         'user2': user2,
         'target_user': target_user,
     })
+
+
+@login_required
+def friend_timeline(request, user_id):
+    user = User.objects.get(id=user_id)
+    friendships = Friendship.objects.filter(
+        (Q(sender=user) | Q(receiver=user)) & Q(status='accepted')
+    )
+
+    # Lấy danh sách bạn bè từ các yêu cầu kết bạn này
+    friends = []
+    for friendship in friendships:
+        if friendship.sender == user:
+            friends.append(friendship.receiver)
+        else:
+            friends.append(friendship.sender)
+    context = {
+        'friends': friends,
+        'friends_count': len(friends),
+        'user': user,
+        'posts': user.posts.all(),
+        'friend_page': True
+    }
+    return render(request, 'social/timeline-friends2.html', context=context)
+
+
+@login_required
+def unfriend(request, user_id):
+    user1 = request.user
+    user2 = User.objects.get(id=user_id)
+    success = Friendship.unfriend(user1, user2)
+    if success:
+        return redirect('friend_timeline', user_id=user1.id)
+    raise Http404('Unfriend error')

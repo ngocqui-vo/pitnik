@@ -48,6 +48,20 @@ class Friendship(models.Model):
     def __str__(self):
         return f'{self.sender.username} - {self.receiver.username} - {self.status}'
 
+    @staticmethod
+    def unfriend(user1, user2):
+        # Tìm bản ghi kết bạn có trạng thái 'accepted' giữa hai người dùng
+        friendship = Friendship.objects.filter(
+            sender=user1, receiver=user2, status='accepted'
+        ).first() or Friendship.objects.filter(
+            sender=user2, receiver=user1, status='accepted'
+        ).first()
+
+        if friendship:
+            friendship.delete()
+            return True
+        return False
+
 
 class Follow(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
