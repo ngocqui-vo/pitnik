@@ -1,0 +1,100 @@
+{% extends './base.html' %}
+
+{% block title %}
+
+{% endblock %}
+
+
+{% block content %}
+	<div class="container mt-5">
+        <h2 class="mb-4">Update user information</h2>
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">Fields</th>
+                        <th scope="col">Infos</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td><label for="first_name">First name</label></td>
+                        <td>
+                            {{ user_form.first_name }}
+                            {% if user_form.first_name.errors %}
+                                <div class="text-danger">{{ user_form.first_name.errors }}</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="last_name">Last name</label></td>
+                        <td>
+                            {{ user_form.last_name }}
+                            {% if user_form.last_name.errors %}
+                                <div class="text-danger">{{ user_form.last_name.errors }}</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="email">Email</label></td>
+                        <td>
+                            {{ user_form.email }}
+                            {% if user_form.email.errors %}
+                                <div class="text-danger">{{ user_form.email.errors }}</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 class="mb-4">Update profile</h2>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">Fields</th>
+                        <th scope="col">Infos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><label for="avatar">Avatar</label></td>
+                        <td>
+                            {{ profile_form.avatar }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="background_image">Background</label></td>
+                        <td>
+                            {{ profile_form.background_image }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="phone">Phone</label></td>
+                        <td>
+                            {{ profile_form.phone }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="bio">Bio</label></td>
+                        <td>
+                            {{ profile_form.bio }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="gender">Gender</label></td>
+                        <td>
+                            {{ profile_form.gender }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="text-center button-container">
+                <button type="submit" class="btn btn-primary btn-lg me-2">Save</button>
+                <a href="{% url 'user_profile' request.user.id %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

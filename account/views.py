@@ -3,8 +3,11 @@ from django.http import Http404
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
 from .models import Profile, User
+from django.views import View
+from django.shortcuts import get_object_or_404
 
 
 def user_login(request):
@@ -41,7 +44,6 @@ def user_register(request):
         return redirect('index')
 
     return render(request, 'account/register.html')
-
 
 
 

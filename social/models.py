@@ -103,3 +103,15 @@ class Notification(models.Model):
 
     def __str__(self):
         return f'{self.recipient.username} - {self.notification_type} - {self.is_read} - {self.content}'
+
+
+
+class ReportPost(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='report_posts')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='report_posts')
+    created_at = models.DateTimeField(auto_now_add=True)
+    content = models.TextField()
+    is_blocked = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.user.username} - {self.post.content}'

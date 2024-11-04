@@ -17,6 +17,10 @@ from account.models import User
 from channels.layers import get_channel_layer
 from .forms import PostForm
 from django.contrib import messages
+from django.shortcuts import get_object_or_404
+from .forms import UserUpdateForm, ProfileUpdateForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 
 @login_required
 def index(request):
@@ -367,3 +371,47 @@ def unfriend(request, user_id):
     if success:
         return redirect('friend_timeline', user_id=user1.id)
     raise Http404('Unfriend error')
+
+
+
+class EditProfileView(LoginRequiredMixin, View):
+    template_name = 'social/edit-profile.html'
+
+    def get(self, request, *args, **kwargs):
+        user_form = UserUpdateForm(instance=request.user)
+        profile_form = ProfileUpdateForm(instance=request.user.profile)
+        context = {
+            'user_form': user_form,
+            'profile_form': profile_form,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        profile_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            # Chuyển hướng đến trang profile của người dùng
+            return redirect('user_profile', user_id=request.user.id)
+
+        context = {
+            'user_form': user_form,
+            'profile_form': profile_form,
+        }
+        return render(request, self.template_name, context)
+
+
+def user_timeline(request, user_id):
+    user = User.objects.get(id=user_id)
+    if not user:
+        raise Http404('User not found')
+    liked_posts_ids = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+    context = {
+        'user': user,
+        'posts': user.posts.all().order_by('-created_at'),
+        'liked_posts_ids': liked_posts_ids,
+        'timeline': True,
+    }
+    return render(request, 'social/timeline.html', context)
