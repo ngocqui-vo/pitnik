@@ -85,7 +85,8 @@
                                 </aside>
                             </div><!-- sidebar -->
                             <div class="col-lg-6">
-                                <div class="central-meta postbox">
+                                {% if user == request.user %}
+                                	<div class="central-meta postbox">
                                     <span class="create-post">Create post</span>
                                     <form class="new-postbox" method="post" enctype="multipart/form-data" id="postForm">
                                         <figure>
@@ -136,6 +137,8 @@
                                         </div>
                                     </form>
                                 </div><!-- add post new box -->
+                                {% endif %}
+
 
                                 <div class="loadMore">
                                     {% for post in posts %}

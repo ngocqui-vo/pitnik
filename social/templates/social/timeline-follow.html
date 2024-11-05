@@ -1,0 +1,111 @@
+{% extends './base.html' %}
+
+{% block title %}
+
+{% endblock %}
+
+
+{% block content %}
+	<section>
+		<div class="gap2 gray-bg">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-12">
+						<div class="row merged20" id="page-contents">
+							{% include 'partial/user-profile.html' %}<!-- user profile banner  -->
+							<div class="col-lg-12">
+								<div class="central-meta">
+									<div class="title-block">
+										<div class="row">
+											<div class="col-lg-6">
+												<div class="align-left">
+													<h5>Followers <span>{{ user.following.count }}</span></h5>
+												</div>
+											</div>
+											<div class="col-lg-6">
+
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="central-meta padding30">
+									<div class="row merged20">
+										{% for follow in user.following.all %}
+											<div class="col-lg-3 col-md-6 col-sm-6">
+											<div class="friend-block">
+
+												<figure>
+													<img src="{{ follow.follower.profile.avatar.url }}" alt="">
+												</figure>
+
+												<div class="frnd-meta">
+													<div class="frnd-name">
+														<a href="#" title="">{{ follow.follower.first_name }} {{ follow.follower.last_name }}</a>
+														<span>Los Angeles, CA</span>
+													</div>
+													<a class="" href="{% url 'user_profile' follow.follower.id %}" title="">Profile</a>
+												</div>
+											</div>
+										</div>
+
+										{% endfor %}
+
+									</div>
+
+								</div><!-- followers block -->
+
+                                <div class="central-meta">
+									<div class="title-block">
+										<div class="row">
+											<div class="col-lg-6">
+												<div class="align-left">
+													<h5>Following <span>{{ user.follower.count }}</span></h5>
+												</div>
+											</div>
+											<div class="col-lg-6">
+
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="central-meta padding30">
+									<div class="row merged20">
+										{% for follow in user.follower.all %}
+											<div class="col-lg-3 col-md-6 col-sm-6">
+											<div class="friend-block">
+												<div class="more-opotnz">
+													<i class="fa fa-ellipsis-h"></i>
+													<ul>
+														{% if user == request.user %}
+															<li><a href="{% url 'user_unfollow' follow.following.id %}" title="">Unfollow</a></li>
+														{% endif %}
+
+													</ul>
+												</div>
+												<figure>
+													<img src="{{ follow.following.profile.avatar.url }}" alt="">
+												</figure>
+
+												<div class="frnd-meta">
+													<div class="frnd-name">
+														<a href="#" title="">{{ follow.following.first_name }} {{ follow.following.last_name }}</a>
+														<span>Los Angeles, CA</span>
+													</div>
+													<a class="" href="" title="">Profile</a>
+												</div>
+											</div>
+										</div>
+
+										{% endfor %}
+
+									</div>
+
+								</div><!-- followings block -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section><!-- content -->
+{% endblock %}

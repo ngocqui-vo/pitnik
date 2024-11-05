@@ -2,11 +2,14 @@ import shortuuid
 from django.db import models
 from account.models import User
 
+
 class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_blocked = models.BooleanField(default=False)
+
 
     def __str__(self):
         return self.content
@@ -64,12 +67,12 @@ class Friendship(models.Model):
 
 
 class Follow(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
     following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.user.username} - {self.following.username}'
+        return f'{self.follower.username} - {self.following.username}'
 
 
 class Room(models.Model):
@@ -95,7 +98,7 @@ class Message(models.Model):
 class Notification(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
-    notification_type = models.CharField(max_length=100, choices=[('friend_request', 'Friend Request'), ('new_message', 'New Message'), ('friend_request_accepted', 'Friend Request Accepted')])
+    notification_type = models.CharField(max_length=100, choices=[('friend_request', 'Friend Request'), ('new_message', 'New Message'), ('friend_request_accepted', 'Friend Request Accepted'), ('liked_post', 'Liked Post')])
     content = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -111,7 +114,7 @@ class ReportPost(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='report_posts')
     created_at = models.DateTimeField(auto_now_add=True)
     content = models.TextField()
-    is_blocked = models.BooleanField(default=False)
+    is_resolve = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.user.username} - {self.post.content}'

@@ -10,8 +10,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room
-from django.shortcuts import render, get_object_or_404, redirect
+from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from account.models import User
 from channels.layers import get_channel_layer
@@ -35,7 +35,7 @@ class PostPagination(PageNumberPagination):
 
 @api_view(['GET'])
 def post_list(request):
-    posts = Post.objects.order_by('-created_at')  # Lấy tất cả bài viết từ database
+    posts = Post.objects.order_by('-created_at').filter(is_blocked=False)  # Lấy tất cả bài viết từ database
     paginator = PostPagination()  # Sử dụng class phân trang đã tạo
     result_page = paginator.paginate_queryset(posts, request)  # Phân trang kết quả
 
@@ -162,6 +162,26 @@ class LikePostView(View):
             like, created = Like.objects.get_or_create(user=request.user, post=post)
 
             if created:
+                Notification.objects.create(
+                    sender=request.user,
+                    recipient=post.user,
+                    notification_type='liked_post',
+                    content=f'{request.user.username} has liked your post'
+                )
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{post.user.id}",
+                    {
+                        "type": "notification_message",
+                        "notification": {
+                            "sender": request.user.username,
+                            "content": f"{request.user.username} has liked your post",
+                            "avatar": f'{request.user.profile.avatar.url}',
+                            "fullname": f'{request.user.first_name} {request.user.last_name}',
+                            "is_read": False
+                        }
+                    }
+                )
                 # Nếu tạo mới "like", trả về thông tin thành công
                 return JsonResponse({'message': 'Liked', 'liked': True, 'like_count': post.likes.count()})
             else:
@@ -169,47 +189,6 @@ class LikePostView(View):
                 like.delete()
                 return JsonResponse({'message': 'Unliked', 'liked': False, 'like_count': post.likes.count()})
         return JsonResponse({'error': 'User not authenticated'}, status=403)
-
-
-@login_required
-def user_profile(request, user_id):
-    user = User.objects.get(id=user_id)
-    if user is None:
-        raise Http404('User does not exist')
-    posts = Post.objects.filter(user=user)
-    all_images = ImagePost.objects.filter(post__in=posts)
-    add_friend = True
-    if (user == request.user
-            or user.sent_friend_requests.filter(receiver=request.user).exists()
-            or request.user.sent_friend_requests.filter(receiver=user).exists()
-            or user.received_friend_requests.filter(receiver=request.user).exists()
-            or request.user.received_friend_requests.filter(receiver=user).exists()):
-        add_friend = False
-
-
-    context = {'user': user, 'images': all_images, 'posts': posts, 'profile': True, 'add_friend': add_friend}
-    return render(request, 'social/about.html', context=context)
-
-
-@login_required
-def user_photos(request, user_id):
-    user = User.objects.get(id=user_id)
-    if user is None:
-        raise Http404('User does not exist')
-    posts = Post.objects.filter(user=user)
-    all_images = ImagePost.objects.filter(post__in=posts).order_by('-uploaded_at')
-    sort_by = request.GET.get('sort')
-    if sort_by and sort_by == 'oldest':
-        all_images = all_images.order_by('uploaded_at')
-    add_friend = True
-    if (user == request.user
-            or user.sent_friend_requests.filter(receiver=request.user).exists()
-            or request.user.sent_friend_requests.filter(receiver=user).exists()
-            or user.received_friend_requests.filter(receiver=request.user).exists()
-            or request.user.received_friend_requests.filter(receiver=user).exists()):
-        add_friend = False
-    context = {'user': user, 'images': all_images, 'posts': posts, 'photos': True, 'sort_by': sort_by, 'add_friend': add_friend}
-    return render(request, 'social/timeline-photos.html', context=context)
 
 
 @login_required
@@ -295,22 +274,6 @@ def friend_requests(request):
     })
 
 
-@login_required
-def user_notifications(request, user_id):
-    user = User.objects.get(id=user_id)
-    if not request.user.is_authenticated and user != request.user:
-        return JsonResponse({'error': 'User not authenticated'}, status=403)
-    notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')
-    for notification in notifications:
-        notification.is_read = True
-        notification.save()
-    context = {
-        'notifications': notifications,
-        'posts': user.posts.all(),
-        'user': user,
-    }
-    return render(request, 'social/notifications.html', context=context)
-
 
 @login_required
 def room(request, username1, username2):
@@ -337,30 +300,6 @@ def room(request, username1, username2):
         'user2': user2,
         'target_user': target_user,
     })
-
-
-@login_required
-def friend_timeline(request, user_id):
-    user = User.objects.get(id=user_id)
-    friendships = Friendship.objects.filter(
-        (Q(sender=user) | Q(receiver=user)) & Q(status='accepted')
-    )
-
-    # Lấy danh sách bạn bè từ các yêu cầu kết bạn này
-    friends = []
-    for friendship in friendships:
-        if friendship.sender == user:
-            friends.append(friendship.receiver)
-        else:
-            friends.append(friendship.sender)
-    context = {
-        'friends': friends,
-        'friends_count': len(friends),
-        'user': user,
-        'posts': user.posts.all(),
-        'friend_page': True
-    }
-    return render(request, 'social/timeline-friends2.html', context=context)
 
 
 @login_required
@@ -403,15 +342,175 @@ class EditProfileView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
 
 
+@login_required
+def user_unfollow(request, user_id):
+    user_to_unfollow = get_object_or_404(User, id=user_id)
+    follow_instance = Follow.objects.filter(follower=request.user, following=user_to_unfollow)
+
+    if follow_instance.exists():
+        follow_instance.delete()  # Xóa record follow khỏi cơ sở dữ liệu
+
+    return redirect('user_follow', user_id=request.user.id)
+
+
+
+################ user
+
+@login_required
+def user_notifications(request, user_id):
+    user = User.objects.get(id=user_id)
+    if not request.user.is_authenticated and user != request.user:
+        return JsonResponse({'error': 'User not authenticated'}, status=403)
+    notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')
+    for notification in notifications:
+        notification.is_read = True
+        notification.save()
+
+    context = {
+        'notifications': notifications,
+        'posts': user.posts.filter(is_blocked=False),
+        'user': user,
+    }
+    return render(request, 'social/notifications.html', context=context)
+
+
+@login_required
+def friend_timeline(request, user_id):
+    user = User.objects.get(id=user_id)
+    friendships = Friendship.objects.filter(
+        (Q(sender=user) | Q(receiver=user)) & Q(status='accepted')
+    )
+
+    # Lấy danh sách bạn bè từ các yêu cầu kết bạn này
+    friends = []
+    for friendship in friendships:
+        if friendship.sender == user:
+            friends.append(friendship.receiver)
+        else:
+            friends.append(friendship.sender)
+    add_friend = True
+    if (user == request.user
+            or user.sent_friend_requests.filter(receiver=request.user).exists()
+            or request.user.sent_friend_requests.filter(receiver=user).exists()
+            or user.received_friend_requests.filter(receiver=request.user).exists()
+            or request.user.received_friend_requests.filter(receiver=user).exists()):
+        add_friend = False
+    add_follow = True
+    if user == request.user or Follow.objects.filter(follower=request.user, following=user).exists():
+        add_follow = False
+    context = {
+        'friends': friends,
+        'friends_count': len(friends),
+        'user': user,
+        'posts': user.posts.filter(is_blocked=False),
+        'friend_page': True,
+        'add_friend': add_friend,
+        'add_follow': add_follow,
+    }
+    return render(request, 'social/timeline-friends2.html', context=context)
+
+@login_required
+def user_follow(request, user_id):
+    user = User.objects.get(id=user_id)
+    if not user:
+        raise Http404('User not found')
+    add_friend = True
+    if (user == request.user
+            or user.sent_friend_requests.filter(receiver=request.user).exists()
+            or request.user.sent_friend_requests.filter(receiver=user).exists()
+            or user.received_friend_requests.filter(receiver=request.user).exists()
+            or request.user.received_friend_requests.filter(receiver=user).exists()):
+        add_friend = False
+    add_follow = True
+    if user == request.user or Follow.objects.filter(follower=request.user, following=user).exists():
+        add_follow = False
+    context = {
+        'user': user,
+        'posts': user.posts.filter(is_blocked=False),
+        # 'follows': user.following.all(),
+        'follow_page': True,
+        'add_friend': add_friend,
+        'add_follow': add_follow,
+    }
+    return render(request, 'social/timeline-follow.html', context)
+
+
+@login_required
 def user_timeline(request, user_id):
     user = User.objects.get(id=user_id)
     if not user:
         raise Http404('User not found')
     liked_posts_ids = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+    add_friend = True
+    if (user == request.user
+            or user.sent_friend_requests.filter(receiver=request.user).exists()
+            or request.user.sent_friend_requests.filter(receiver=user).exists()
+            or user.received_friend_requests.filter(receiver=request.user).exists()
+            or request.user.received_friend_requests.filter(receiver=user).exists()):
+        add_friend = False
+    add_follow = True
+    if user == request.user or Follow.objects.filter(follower=request.user, following=user).exists():
+        add_follow = False
     context = {
         'user': user,
-        'posts': user.posts.all().order_by('-created_at'),
+        'posts': user.posts.filter(is_blocked=False).order_by('-created_at'),
         'liked_posts_ids': liked_posts_ids,
         'timeline': True,
+        'add_friend': add_friend,
+        'add_follow': add_follow,
     }
     return render(request, 'social/timeline.html', context)
+
+@login_required
+def user_photos(request, user_id):
+    user = User.objects.get(id=user_id)
+    if user is None:
+        raise Http404('User does not exist')
+    posts = Post.objects.filter(user=user)
+    all_images = ImagePost.objects.filter(post__in=posts).order_by('-uploaded_at')
+    sort_by = request.GET.get('sort')
+    if sort_by and sort_by == 'oldest':
+        all_images = all_images.order_by('uploaded_at')
+    add_friend = True
+    if (user == request.user
+            or user.sent_friend_requests.filter(receiver=request.user).exists()
+            or request.user.sent_friend_requests.filter(receiver=user).exists()
+            or user.received_friend_requests.filter(receiver=request.user).exists()
+            or request.user.received_friend_requests.filter(receiver=user).exists()):
+        add_friend = False
+    add_follow = True
+    if user == request.user or Follow.objects.filter(follower=request.user, following=user).exists():
+        add_follow = False
+    context = {'user': user, 'images': all_images, 'posts': posts, 'photos': True, 'sort_by': sort_by, 'add_friend': add_friend, 'add_follow': add_follow}
+    return render(request, 'social/timeline-photos.html', context=context)
+
+
+@login_required
+def user_profile(request, user_id):
+    user = User.objects.get(id=user_id)
+    if user is None:
+        raise Http404('User does not exist')
+    posts = Post.objects.filter(user=user, is_blocked=False)
+    all_images = ImagePost.objects.filter(post__in=posts)
+    add_friend = True
+    if (user == request.user
+            or user.sent_friend_requests.filter(receiver=request.user).exists()
+            or request.user.sent_friend_requests.filter(receiver=user).exists()
+            or user.received_friend_requests.filter(receiver=request.user).exists()
+            or request.user.received_friend_requests.filter(receiver=user).exists()):
+        add_friend = False
+
+    add_follow = True
+    if user == request.user or Follow.objects.filter(follower=request.user, following=user).exists():
+        add_follow = False
+    context = {'user': user, 'images': all_images, 'posts': posts, 'profile': True, 'add_friend': add_friend, 'add_follow': add_follow}
+    return render(request, 'social/timeline-about.html', context=context)
+
+
+@login_required
+def user_add_follow(request, user_id):
+    user = User.objects.get(id=user_id)
+    if user is None:
+        raise Http404('User does not exist')
+    Follow.objects.create(follower=request.user, following=user)
+    return redirect('user_follow', user_id=user.id)

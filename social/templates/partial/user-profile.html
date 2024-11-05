@@ -13,7 +13,10 @@
                 <li><a href="#" title="Add friend" class="send-friend-request-btn" data-user-id="{{ user.id }}"
                        data-toggle="tooltip"><i class="fa fa-user-plus"></i></a></li>
             {% endif %}
-            <li><a href="#" title="Follow" data-toggle="tooltip"><i class="fa fa-star"></i></a></li>
+            {% if add_follow %}
+            	<li><a href="{% url 'add_follow' user.id %}" title="Follow" data-toggle="tooltip"><i class="fa fa-star"></i></a></li>
+
+            {% endif %}
             <li><a class="send-mesg" href="#" title="Send Message" data-toggle="tooltip"><i
                     class="fa fa-comment"></i></a></li>
             <li>
@@ -58,10 +61,14 @@
                         <a class="{% if profile %}active{% endif %}" href="{% url 'user_profile' user.id %}">About</a>
                     </li>
                     <li>
-                        <a class="{% if timeline %}active{% endif %}" href="{% url 'user_timeline' user.id %}">Timeline</a>
+                        <a class="{% if timeline %}active{% endif %}"
+                           href="{% url 'user_timeline' user.id %}">Timeline</a>
                     </li>
                     <li>
                         <a class="{% if friend_page %}active{% endif %}" href="{% url 'friend_timeline' user.id %}">Friends</a>
+                    </li>
+                    <li>
+                        <a class="{% if follow_page %}active{% endif %}" href="{% url 'user_follow' user.id %}">Follow</a>
                     </li>
                     <li>
                         <a class="{% if photos %}active{% endif %}" href="{% url 'user_photos' user.id %}">Photos</a>
@@ -86,10 +93,10 @@
                         <ins>{{ posts.count }}</ins>
                     </li>
                     <li><span>Followers</span>
-                        <ins>1.3K</ins>
+                        <ins>{{ user.following.count }}</ins>
                     </li>
                     <li><span>Following</span>
-                        <ins>22</ins>
+                        <ins>{{ user.follower.count }}</ins>
                     </li>
                 </ol>
             </div>
