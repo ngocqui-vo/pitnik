@@ -10,7 +10,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow
+from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow, ReportPost
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from account.models import User
@@ -144,7 +144,26 @@ def add_comment(request):
 
         # Tạo comment mới
         comment = Comment.objects.create(post=post, user=user, content=content)
-
+        Notification.objects.create(
+            sender=user,
+            recipient=post.user,
+            notification_type='commented_post',
+            content=f'{request.user.username} has commented your post'
+        )
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{post.user.id}",
+            {
+                "type": "notification_message",
+                "notification": {
+                    "sender": user.username,
+                    "content": f"{user.username} has commented your post",
+                    "avatar": f'{user.profile.avatar.url}',
+                    "fullname": f'{user.first_name} {user.last_name}',
+                    "is_read": False
+                }
+            }
+        )
         # Render HTML cho comment mới
         comment_html = render_to_string('ajax/add_comment.html', {'comment': comment})
 
@@ -514,3 +533,31 @@ def user_add_follow(request, user_id):
         raise Http404('User does not exist')
     Follow.objects.create(follower=request.user, following=user)
     return redirect('user_follow', user_id=user.id)
+
+
+@login_required
+def report_post(request, post_id):
+    if request.method == "POST":
+        post = Post.objects.get(id=post_id)
+        report = ReportPost.objects.create(post=post, user=request.user, content=request.POST['content'])
+        report.save()
+        return redirect('index')
+    return render(request, 'social/report-post.html', {'post_id': post_id})
+
+
+@login_required
+def report_list(request):
+    if not request.user.is_staff:
+        return redirect('index')
+    reports = ReportPost.objects.order_by('-created_at')
+    return render(request, 'social/report-list.html', {'reports': reports})
+
+
+@login_required
+def detail_post_for_report(request, report_id):
+    report = ReportPost.objects.get(id=report_id)
+    post = report.post
+    images = ImagePost.objects.filter(post=post)
+    if not post:
+        raise Http404('Post does not exist')
+    return render(request, 'social/detail_post.html', {'post': post, 'images': images, 'report': report})

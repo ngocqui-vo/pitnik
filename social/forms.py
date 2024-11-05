@@ -40,3 +40,5 @@ class ProfileUpdateForm(forms.ModelForm):
 
 class UserPostSearchForm(forms.Form):
     query = forms.CharField(label='Tìm kiếm', max_length=100, required=False)
+
+

@@ -25,6 +25,9 @@ urlpatterns = [
     path('friend-requests/', views.friend_requests, name='friend_requests'),
 
     path('chat/<str:username1>/<str:username2>/', views.room, name='room'),
+    path('report-post-list/', views.report_list, name='report_list'),
+    path('report-post/<int:post_id>/', views.report_post, name='report_post'),
+    path('report-post/detail/<int:report_id>/', views.detail_post_for_report, name='report_post_detail'),
 
 ]
 

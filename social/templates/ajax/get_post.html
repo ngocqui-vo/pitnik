@@ -15,7 +15,7 @@
                                     <li><i class="fa fa-pencil-square-o"></i><a href="{% url 'edit_post' post.id %}">Edit Post</a></li>
                                     <li><i class="fa fa-trash-o"></i><a href="{% url 'delete_post' post.id %}">Delete post</a></li>
                                 {% else %}
-                                    <li class="bad-report"><i class="fa fa-flag"></i>Report Post </li>
+                                    <li class="bad-report"><i class="fa fa-flag"></i><a href="{% url 'report_post' post.id %}">Report Post</a> </li>
                                 {% endif %}
 
 
