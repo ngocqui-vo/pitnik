@@ -7,8 +7,9 @@
     <div class="top-area">
 
         <div class="top-search">
-            <form method="post" class="">
-                <input type="text" placeholder="Search People, Pages, Groups etc">
+            <form method="get" action="{% url 'search' %}">
+
+                <input name="q" type="text" placeholder="Search People, Pages, Groups etc">
                 <button data-ripple><i class="ti-search"></i></button>
             </form>
         </div>
