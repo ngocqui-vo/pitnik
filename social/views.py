@@ -13,7 +13,7 @@ from rest_framework.pagination import PageNumberPagination
 from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow, ReportPost
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from account.models import User
+from account.models import User, Profile
 from channels.layers import get_channel_layer
 from .forms import PostForm
 from django.contrib import messages
@@ -561,3 +561,29 @@ def detail_post_for_report(request, report_id):
     if not post:
         raise Http404('Post does not exist')
     return render(request, 'social/detail_post.html', {'post': post, 'images': images, 'report': report})
+
+
+@login_required
+def search(request):
+    query = request.GET.get('q', '').strip()
+    if not query:  # Nếu query rỗng
+        return render(request, 'social/search-result.html', {'users': [], 'posts': [], 'query': query})
+
+    # User search: first_name, last_name, and full name matches
+    users = Profile.objects.filter(
+        Q(user__first_name__icontains=query) |
+        Q(user__last_name__icontains=query) |
+        Q(user__first_name__icontains=query.split()[0]) &
+        Q(user__last_name__icontains=query.split()[-1]) |
+        Q(user__first_name__icontains=query) & Q(user__last_name__icontains=query)
+    )
+
+    # Post search based on content
+    posts = Post.objects.filter(content__icontains=query)
+
+    # Render results to the template
+    return render(request, 'social/search-result.html', {
+        'users': users,
+        'posts': posts,
+        'query': query
+    })

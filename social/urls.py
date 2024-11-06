@@ -29,5 +29,7 @@ urlpatterns = [
     path('report-post/<int:post_id>/', views.report_post, name='report_post'),
     path('report-post/detail/<int:report_id>/', views.detail_post_for_report, name='report_post_detail'),
 
+    path('user/search/', views.search, name='search'),
+
 ]
 
