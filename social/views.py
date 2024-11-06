@@ -46,7 +46,8 @@ def post_list(request):
     context = {
         'posts': result_page,  # Dữ liệu đã phân trang
         'user': request.user,
-        'liked_posts_ids': liked_posts_ids,  # Thêm danh sách ID bài viết đã "like"
+        'liked_posts_ids': liked_posts_ids,  # Thêm danh sách ID bài viết đã "like",
+
     }
 
     # Render template với context đã tạo

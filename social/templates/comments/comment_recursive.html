@@ -1,0 +1,22 @@
+{% load comment_tags %}
+{% load custom_filters %}
+<li>
+    <div class="comet-avatar">
+        <img src="{{ comment.user.profile.avatar.url }}" alt="">
+    </div>
+    <div class="we-comment">
+        <h5><a href="{% url 'user_profile' comment.user.id %}" title="">{{ comment.user.username }}</a></h5>
+        <p>{{ comment.content }}</p>
+        <div class="inline-itms">
+            <span>{{ comment.created_at|timesince_filter }} ago</span>
+        </div>
+    </div>
+
+    {% if comment.replies.all %}
+        <ul class="we-comet" style="margin-left: 40px;">
+            {% for reply in comment.replies.all %}
+                {% show_comment reply %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+</li>
