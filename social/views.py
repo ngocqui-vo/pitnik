@@ -135,6 +135,7 @@ def add_comment(request):
     if request.method == 'POST':
         content = request.POST.get('content')
         post_id = request.POST.get('post_id')
+        parent_id = request.POST.get('parent_id')  # Lấy ID comment cha, nếu có
         user = request.user
 
         # Tìm bài viết
@@ -143,14 +144,26 @@ def add_comment(request):
         except Post.DoesNotExist:
             return JsonResponse({'error': 'Post not found.'}, status=404)
 
-        # Tạo comment mới
-        comment = Comment.objects.create(post=post, user=user, content=content)
+        # Nếu có `parent_id`, tìm comment cha
+        parent_comment = None
+        if parent_id:
+            try:
+                parent_comment = Comment.objects.get(id=parent_id)
+            except Comment.DoesNotExist:
+                return JsonResponse({'error': 'Parent comment not found.'}, status=404)
+
+        # Tạo comment mới với `parent_comment` nếu có
+        comment = Comment.objects.create(post=post, user=user, content=content, parent=parent_comment)
+
+        # Tạo thông báo
         Notification.objects.create(
             sender=user,
             recipient=post.user,
             notification_type='commented_post',
             content=f'{request.user.username} has commented your post'
         )
+
+        # Gửi thông báo qua WebSocket
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             f"user_{post.user.id}",
@@ -165,11 +178,12 @@ def add_comment(request):
                 }
             }
         )
+
         # Render HTML cho comment mới
         comment_html = render_to_string('ajax/add_comment.html', {'comment': comment})
 
         # Trả về JSON chứa HTML của comment mới
-        return JsonResponse({'comment_html': comment_html}, status=200)
+        return JsonResponse({'comment_html': comment_html, 'parent_id': parent_id}, status=200)
 
     return JsonResponse({'error': 'Invalid request.'}, status=400)
 

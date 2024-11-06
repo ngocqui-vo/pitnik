@@ -1,3 +1,4 @@
+{% load comment_tags %}
 <li>
     <div class="comet-avatar">
         <img src="{{ comment.user.profile.avatar.url }}" alt="">
@@ -7,7 +8,27 @@
         <p>{{ comment.content }}</p>
         <div class="inline-itms">
             <span>{{ comment.created_at }}</span>
-
+            <a href="#" class="reply-btn" data-comment-id="{{ comment.id }}">Reply</a> <!-- Nút Reply -->
         </div>
     </div>
+
+    <!-- Form reply ẩn -->
+    <div class="reply-form-container" style="display: none;">
+        <form class="reply-form" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="post_id" value="{{ comment.post.id }}">
+            <input type="hidden" name="parent_id" value="{{ comment.id }}">
+            <textarea name="content" placeholder="Write a reply..."></textarea>
+            <button type="submit" style="color: black">Reply</button>
+        </form>
+    </div>
+
+    <!-- Nếu có các reply con thì hiển thị ở đây -->
+    {% if comment.replies.all %}
+        <ul class="we-comet" style="margin-left: 40px;">
+            {% for reply in comment.replies.all %}
+                {% show_comment reply %}
+            {% endfor %}
+        </ul>
+    {% endif %}
 </li>
