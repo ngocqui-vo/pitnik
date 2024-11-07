@@ -46,30 +46,28 @@
             </li>
             <li>
                 <a href="#" title="Messages" data-ripple=""><i class="fa fa-commenting"></i>
-                <div class="dropdowns">
+                </a>
+                    <div class="dropdowns">
+                        <ul class="drops-menu">
+                            {% for room in rooms %}
+                                <li>
+                                    <a class="" href="{% url 'room' request.user.username room.target_user.username %}"
+                                       title="">
+                                        <figure>
+                                            <img src="{{ room.target_user.profile.avatar.url }}" alt="">
+                                            <span class="status f-online"></span>
+                                        </figure>
+                                        <div class="mesg-meta">
+                                            <h6>{{ room.target_user.username }}</h6>
+                                            <span><i class="ti-check"></i> {{ room.latest_message.content }} </span>
+                                            <i>{{ room.messages.all.0.timestamp }}</i>
+                                        </div>
+                                    </a>
+                                </li>
+                            {% endfor %}
 
-                    <ul class="drops-menu">
-                        {% for room in rooms %}
-                        	<li>
-                                <a class="" href="{% url 'room' request.user.username room.target_user.username %}" title="">
-                                    <figure>
-                                        <img src="{{ room.target_user.profile.avatar.url }}" alt="">
-                                        <span class="status f-online"></span>
-                                    </figure>
-                                    <div class="mesg-meta">
-                                        <h6>{{ room.target_user.username }}</h6>
-                                        <span><i class="ti-check"></i> {{ room.latest_message.content }} </span>
-                                        <i>{{ room.messages.all.0.timestamp }}</i>
-                                    </div>
-                                </a>
-                        </li>
-                        {% endfor %}
-
-
-
-                    </ul>
-
-                </div>
+                        </ul>
+                    </div>
             </li>
 
 
@@ -88,10 +86,11 @@
                 </ul>
                 <span class="seting-title">User setting <a href="#" title="">see all</a></span>
                 <ul class="log-out">
-                    <li><a href="{% url 'user_profile' request.user.id %}" title=""><i class="ti-user"></i> view profile</a></li>
+                    <li><a href="{% url 'user_profile' request.user.id %}" title=""><i class="ti-user"></i> view profile</a>
+                    </li>
                     <li><a href="{% url 'edit-profile' %}" title=""><i class="ti-pencil-alt"></i>edit profile</a></li>
                     {% if request.user.is_staff %}
-                    	<li><a href="{% url 'report_list' %}" title=""><i class="ti-target"></i>Reports ports</a></li>
+                        <li><a href="{% url 'report_list' %}" title=""><i class="ti-target"></i>Reports ports</a></li>
                     {% endif %}
                     <li><a href="setting.html" title=""><i class="ti-settings"></i>account setting</a></li>
                     <li><a href="{% url 'user_logout' %}" title=""><i class="ti-power-off"></i>log out</a></li>
