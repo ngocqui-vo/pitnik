@@ -5,20 +5,21 @@
         <img src="{{ comment.user.profile.avatar.url }}" alt="">
     </div>
     <div class="we-comment">
-        <h5><a href="time-line.html" title="">{{ comment.user.username }}</a></h5>
+        <h5><a href="{% url 'user_profile' comment.user.id %}" title="">{{ comment.user.username }}</a></h5>
         <p>{{ comment.content }}</p>
         <div class="inline-itms">
             <span>{{ comment.created_at|timesince_filter }} ago</span>
             <!-- Nút Like và số lượt like -->
             <a href="#" class="like-btn" data-comment-id="{{ comment.id }}">
+
                 {% if comment.id in liked_comments_ids %}
-                    Unlike
+                    <i class="fa fa-heart" style="color: red"></i>
                 {% else %}
-                    Like
+                    <i class="fa fa-heart"></i>
                 {% endif %}
             </a>
             <span class="like-count">{{ comment.likes.count }}</span> <!-- Hiển thị số lượt like -->
-            <a href="#" class="reply-btn" data-comment-id="{{ comment.id }}">Reply</a>
+            <a href="#" class="reply-btn" data-comment-id="{{ comment.id }}"><i class="fa fa-reply"></i></a>
         </div>
     </div>
 
@@ -36,7 +37,7 @@
             {% csrf_token %}
             <input type="hidden" name="post_id" value="{{ comment.post.id }}">
             <input type="hidden" name="parent_id" value="{{ comment.id }}">
-            <textarea name="content" placeholder="Write a reply..."></textarea>
+            <textarea class="comment-area" name="content" placeholder="Write a reply..."></textarea>
             <button type="submit" style="color: black">Reply</button>
         </form>
     </div>

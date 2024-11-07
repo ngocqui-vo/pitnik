@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/color.css' %}">
     <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/emojionearea/3.4.2/emojionearea.min.css">
 
 </head>
 <body>
@@ -539,12 +539,20 @@
 <script src="{% static 'js/toast-notificatons.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script><!-- For timeline slide show -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8c55_YHLvDHGACkQscgbGLtLRdxBDCfI"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/emojionearea/3.4.2/emojionearea.min.js"></script>
 <!-- for location picker map -->
 {#<script src="{% static 'js/locationpicker.jquery.js' %}"></script><!-- for loaction picker map -->#}
 <script src="{% static 'js/map-init.js' %}"></script><!-- map initilasition -->
 {#	<script src="{% static 'js/page-tourintro.js' %}"></script>#}
 {#	<script src="{% static 'js/page-tour-init.js' %}"></script>#}
 <script src="{% static 'js/script.js' %}"></script>
+
+<!-- add emoji -->
+<script>
+    $(document).ready(function() {
+        $('.comment-area').emojioneArea()
+    })
+</script>
 <script>
     window.csrftoken = '{{ csrf_token }}';
 </script>
@@ -705,6 +713,7 @@
                     $(".postoverlay").fadeOut(500);
                     let item = response.html;
                     $('#loadMore').prepend(item)
+                    $('.comment-area').emojioneArea();
                 },
                 error: function (xhr, status, error) {
                     console.error('Failed to create post:', error);
@@ -746,6 +755,7 @@
                         var currentCount = parseInt($commentCount.text(), 10); // Lấy số đếm hiện tại
                         $commentCount.text(currentCount + 1); // Tăng số đếm lên 1
                         $form.find('textarea[name="content"]').val('');
+                        $('.comment-area').emojioneArea();
                     }
                 },
                 error: function (xhr, status, error) {
@@ -796,6 +806,7 @@
                         $repliesList.append(response.comment_html); // Thêm reply mới
                         $form.find('textarea[name="content"]').val(''); // Xóa nội dung form
                         $form.closest('.reply-form-container').hide(); // Ẩn form reply
+                        $('.comment-area').emojioneArea();
                     }
                 },
                 error: function (xhr, status, error) {
@@ -806,6 +817,8 @@
     });
 
 </script>
+
+<!-- Xử lý like -->
 <script>
     $(document).ready(function () {
         // Xử lý sự kiện khi người dùng nhấn nút Like
@@ -824,9 +837,9 @@
                 },
                 success: function (response) {
                     if (response.liked) {
-                        $btn.text('Unlike');  // Thay đổi nút thành "Unlike" nếu đã like
+                        $btn.html('<i class="fa fa-heart" style="color: red"></i>');  // Thay đổi nút thành "Unlike" nếu đã like
                     } else {
-                        $btn.text('Like');  // Thay đổi nút thành "Like" nếu đã bỏ like
+                        $btn.html('<i class="fa fa-heart"></i>');  // Thay đổi nút thành "Like" nếu đã bỏ like
                     }
                     // Cập nhật số lượt like
                     $btn.siblings('.like-count').text(response.like_count);
@@ -839,6 +852,7 @@
     });
 </script>
 
+<!-- Animated cho like post -->
 <script>
     var counter = 0;
     var animated = false;
@@ -858,6 +872,8 @@
     });
 
 </script>
+
+
 </body>
 
 

@@ -204,7 +204,7 @@
                 success: function (response) {
 
                     $('#loadMore').append(response.html)
-
+                    $('.comment-area').emojioneArea();
                 },
                 error: function (xhr, status, error) {
                     console.error('Failed to load more posts:', error);
@@ -228,7 +228,7 @@
                     success: function (response) {
                         // Chèn HTML trả về vào phần tử DOM có id là 'loadMore'
                         $('#loadMore').append(response.html);
-
+                        $('.comment-area').emojioneArea();
                         // Cập nhật URL của trang tiếp theo
                         if (response.pagination.next) {
                             $('#load-more-btn').data('next-url', response.pagination.next);
