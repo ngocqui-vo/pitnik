@@ -85,7 +85,7 @@
                     <ul class="we-comet">
 
                         {% for comment in post.comments.all|root_comments %}
-                            {% show_comment comment %}
+                            {% include 'comments/comment_recursive.html' with comment=comment liked_comments_ids=liked_comments_ids %}
                         {% endfor %}
 
                         <li class="post-comment">
@@ -113,5 +113,3 @@
 
         </div>
     </div>
-
-

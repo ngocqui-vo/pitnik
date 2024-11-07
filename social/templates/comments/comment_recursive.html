@@ -9,6 +9,15 @@
         <p>{{ comment.content }}</p>
         <div class="inline-itms">
             <span>{{ comment.created_at|timesince_filter }} ago</span>
+            <!-- Nút Like và số lượt like -->
+            <a href="#" class="like-btn" data-comment-id="{{ comment.id }}">
+                {% if comment.id in liked_comments_ids %}
+                    Unlike
+                {% else %}
+                    Like
+                {% endif %}
+            </a>
+            <span class="like-count">{{ comment.likes.count }}</span> <!-- Hiển thị số lượt like -->
             <a href="#" class="reply-btn" data-comment-id="{{ comment.id }}">Reply</a>
         </div>
     </div>
@@ -16,7 +25,7 @@
     {% if comment.replies.all %}
         <ul class="we-comet" style="margin-left: 40px;">
             {% for reply in comment.replies.all %}
-                {% show_comment reply %}
+                {% include 'comments/comment_recursive.html' with comment=reply liked_comments_ids=liked_comments_ids %}
             {% endfor %}
         </ul>
     {% endif %}

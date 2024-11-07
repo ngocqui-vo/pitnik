@@ -1,3 +1,4 @@
+{% load custom_filters %}
 {% load comment_tags %}
 <li>
     <div class="comet-avatar">
@@ -7,7 +8,12 @@
         <h5><a href="{% url 'user_profile' comment.user.id %}" title="">{{ comment.user.username }}</a></h5>
         <p>{{ comment.content }}</p>
         <div class="inline-itms">
-            <span>{{ comment.created_at }}</span>
+            <span>{{ comment.created_at|timesince_filter }} ago</span>
+            <!-- Nút Like và số lượt like -->
+            <a href="#" class="like-btn" data-comment-id="{{ comment.id }}">
+                    Like
+            </a>
+            <span class="like-count">{{ comment.likes.count }}</span>
             <a href="#" class="reply-btn" data-comment-id="{{ comment.id }}">Reply</a> <!-- Nút Reply -->
         </div>
     </div>
@@ -27,7 +33,7 @@
     {% if comment.replies.all %}
         <ul class="we-comet" style="margin-left: 40px;">
             {% for reply in comment.replies.all %}
-                {% show_comment reply %}
+                {% include 'comments/comment_recursive.html' with comment=reply liked_comments_ids=liked_comments_ids %}
             {% endfor %}
         </ul>
     {% endif %}

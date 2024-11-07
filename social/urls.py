@@ -20,9 +20,11 @@ urlpatterns = [
     path('create_post_with_images/', views.PostCreateView.as_view(), name='create_post_with_images'),
     path('api/comment/add_comment/', views.add_comment, name='add_comment'),
     path('like/<int:post_id>/', views.LikePostView.as_view(), name='like_post'),
+    path('like-comment/', views.like_comment, name='like_comment'),
     path('send-friend-request/<int:user_id>/', views.send_friend_request, name='send_friend_request'),
     path('respond-to-friend-request/<int:sender_id>/<str:action>/', views.respond_to_friend_request, name='respond_to_friend_request'),
     path('friend-requests/', views.friend_requests, name='friend_requests'),
+
 
     path('chat/<str:username1>/<str:username2>/', views.room, name='room'),
     path('report-post-list/', views.report_list, name='report_list'),

@@ -806,6 +806,38 @@
     });
 
 </script>
+<script>
+    $(document).ready(function () {
+        // Xử lý sự kiện khi người dùng nhấn nút Like
+        $(document).on('click', '.like-btn', function (event) {
+            event.preventDefault();
+
+            var $btn = $(this);
+            var commentId = $btn.data('comment-id');
+
+            $.ajax({
+                url: '{% url "like_comment" %}',  // URL của view xử lý like
+                method: 'POST',
+                data: {
+                    'comment_id': commentId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                },
+                success: function (response) {
+                    if (response.liked) {
+                        $btn.text('Unlike');  // Thay đổi nút thành "Unlike" nếu đã like
+                    } else {
+                        $btn.text('Like');  // Thay đổi nút thành "Like" nếu đã bỏ like
+                    }
+                    // Cập nhật số lượt like
+                    $btn.siblings('.like-count').text(response.like_count);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Failed to like comment:', error);
+                }
+            });
+        });
+    });
+</script>
 
 <script>
     var counter = 0;

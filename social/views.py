@@ -10,7 +10,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
-from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow, ReportPost
+from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow, ReportPost, \
+    CommentLike
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from account.models import User, Profile
@@ -41,13 +42,14 @@ def post_list(request):
 
     # Lấy danh sách các bài viết mà người dùng đã "like"
     liked_posts_ids = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
+    liked_comments_ids = CommentLike.objects.filter(user=request.user).values_list('comment_id', flat=True)
 
     # Tạo context chứa danh sách bài viết đã phân trang
     context = {
         'posts': result_page,  # Dữ liệu đã phân trang
         'user': request.user,
         'liked_posts_ids': liked_posts_ids,  # Thêm danh sách ID bài viết đã "like",
-
+        'liked_comments_ids': liked_comments_ids,  # ID comment mà người dùng đã "like"
     }
 
     # Render template với context đã tạo
@@ -613,3 +615,29 @@ def search(request):
         'posts': posts,
         'query': query
     })
+
+
+@csrf_exempt
+def like_comment(request):
+    if request.method == 'POST':
+        comment_id = request.POST.get('comment_id')
+        user = request.user
+
+        try:
+            comment = Comment.objects.get(id=comment_id)
+        except Comment.DoesNotExist:
+            return JsonResponse({'error': 'Comment not found.'}, status=404)
+
+        # Kiểm tra nếu user đã like comment này
+        like, created = CommentLike.objects.get_or_create(comment=comment, user=user)
+
+        if not created:  # Nếu like đã tồn tại, nghĩa là user đã like trước đó
+            like.delete()  # Hủy like
+            liked = False
+        else:
+            liked = True
+
+        like_count = comment.likes.count()
+        return JsonResponse({'liked': liked, 'like_count': like_count}, status=200)
+
+    return JsonResponse({'error': 'Invalid request.'}, status=400)
