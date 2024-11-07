@@ -28,6 +28,7 @@ urlpatterns = [
     path('report-post-list/', views.report_list, name='report_list'),
     path('report-post/<int:post_id>/', views.report_post, name='report_post'),
     path('report-post/detail/<int:report_id>/', views.detail_post_for_report, name='report_post_detail'),
+    path('report-post/blocked/<int:report_id>/', views.resolve_the_report, name='resolve_the_report'),
 
     path('user/search/', views.search, name='search'),
 

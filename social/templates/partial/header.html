@@ -76,9 +76,7 @@
         </ul>
         <div class="user-img">
             <h5>{{ request.user.first_name }} {{ request.user.last_name }}</h5>
-            <img src="
-
-                    {% if request.user.profile.avatar %}{{ request.user.profile.avatar.url }}{% else %}{% static 'images/resources/admin.jpg' %}{% endif %}"
+            <img src="{% if request.user.profile.avatar %}{{ request.user.profile.avatar.url }}{% else %}{% static 'images/resources/admin.jpg' %}{% endif %}"
                  alt="">
             <span class="status f-online"></span>
             <div class="user-setting">

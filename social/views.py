@@ -575,7 +575,18 @@ def detail_post_for_report(request, report_id):
     images = ImagePost.objects.filter(post=post)
     if not post:
         raise Http404('Post does not exist')
-    return render(request, 'social/detail_post.html', {'post': post, 'images': images, 'report': report})
+    return render(request, 'social/detail_report_post.html', {'post': post, 'images': images, 'report': report})
+
+
+@login_required
+def resolve_the_report(request, report_id):
+    report = ReportPost.objects.get(id=report_id)
+    report.is_resolve = True
+    post = report.post
+    post.is_blocked = True
+    report.save()
+    post.save()
+    return redirect('report_list')
 
 
 @login_required
