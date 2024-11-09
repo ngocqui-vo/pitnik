@@ -1,0 +1,8 @@
+<!-- Add this near the top of your post card template -->
+{% if post.group %}
+    <div class="mb-2">
+        <small class="text-muted">
+            Posted in <a href="{% url 'group_detail' post.group.id %}">{{ post.group.name }}</a>
+        </small>
+    </div>
+{% endif %} 

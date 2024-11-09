@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib.auth.models import User
-from .models import Notification, Friendship, Room
+from .models import Notification, Friendship, Room, GroupMember
 
 
 def get_unread_notifications_count(request):
@@ -50,3 +50,10 @@ def get_rooms(request):
         return {'rooms': rooms}
     else:
         return {'rooms': []}
+
+
+def user_groups(request):
+    if request.user.is_authenticated:
+        user_groups = GroupMember.objects.filter(user=request.user)
+        return {'user_groups': user_groups}
+    return {'user_groups': []}

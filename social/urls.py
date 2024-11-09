@@ -34,5 +34,12 @@ urlpatterns = [
 
     path('user/search/', views.search, name='search'),
 
+    path('group/create/', views.create_group, name='create_group'),
+    path('group/<int:group_id>/', views.group_detail, name='group_detail'),
+    path('group/<int:group_id>/post/', views.GroupPostCreateView.as_view(), name='create_group_post'),
+    path('group/<int:group_id>/members/', views.manage_group_member, name='manage_group_member'),
+
+    path('search-users/', views.search_users, name='search_users'),
+
 ]
 

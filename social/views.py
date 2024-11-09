@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow, ReportPost, \
-    CommentLike
+    CommentLike, Group, GroupMember
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from account.models import User, Profile
@@ -617,6 +617,32 @@ def search(request):
     })
 
 
+@login_required
+def search_users(request):
+    query = request.GET.get('q', '')
+    
+    if len(query) >= 2:
+        # Search users by first name, last name, or username
+        users = User.objects.filter(
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(username__icontains=query)
+        ).exclude(id=request.user.id)[:10]  # Limit to 10 results, exclude current user
+        
+        # Format user data for JSON response
+        users_data = []
+        for user in users:
+            users_data.append({
+                'id': user.id,
+                'full_name': f"{user.first_name} {user.last_name}",
+                'username': user.username,
+                'avatar_url': user.profile.avatar.url if user.profile.avatar else None,
+            })
+        
+        return JsonResponse({'users': users_data})
+    
+    return JsonResponse({'users': []})
+
 @csrf_exempt
 def like_comment(request):
     if request.method == 'POST':
@@ -641,3 +667,159 @@ def like_comment(request):
         return JsonResponse({'liked': liked, 'like_count': like_count}, status=200)
 
     return JsonResponse({'error': 'Invalid request.'}, status=400)
+
+
+# Group
+@login_required
+def create_group(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        is_private = request.POST.get('is_private') == 'on'
+        cover_image = request.FILES.get('cover_image')
+
+        group = Group.objects.create(
+            name=name,
+            description=description,
+            creator=request.user,
+            is_private=is_private,
+            cover_image=cover_image
+        )
+        
+        # Add creator as admin member
+        GroupMember.objects.create(
+            user=request.user,
+            group=group,
+            role='admin'
+        )
+
+        messages.success(request, "Group created successfully.")
+        return redirect('group_detail', group_id=group.id)
+    
+    return render(request, 'social/create_group.html')
+
+@login_required
+def group_detail(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    
+    # Check if user can view this group
+    is_member = GroupMember.objects.filter(user=request.user, group=group).exists()
+    if group.is_private and not is_member:
+        raise Http404("You don't have permission to view this group")
+
+    posts = Post.objects.filter(group=group, is_blocked=False).order_by('-created_at')
+    members = GroupMember.objects.filter(group=group)
+    
+    member_role = None
+    if is_member:
+        member_role = GroupMember.objects.get(user=request.user, group=group).role
+
+    context = {
+        'group': group,
+        'posts': posts,
+        'members': members,
+        'is_member': is_member,
+        'member_role': member_role,
+    }
+    return render(request, 'social/group_detail.html', context)
+
+class GroupPostCreateView(PostCreateView):
+    def post(self, request, group_id, *args, **kwargs):
+        group = get_object_or_404(Group, id=group_id)
+        
+        # Check if user is a member
+        if not GroupMember.objects.filter(user=request.user, group=group).exists():
+            return Response({'error': 'You must be a member to post'}, status=status.HTTP_403_FORBIDDEN)
+
+        content = request.data.get('content')
+        images = request.FILES.getlist('images')
+        user = request.user
+
+        # Create post with group
+        post = Post.objects.create(user=user, content=content, group=group)
+
+        # Save images
+        for image in images:
+            ImagePost.objects.create(post=post, image=image)
+
+        context = {'post': post, 'images': images, 'user': user, 'group': group}
+        rendered_html = render_to_string('ajax/created_post.html', context)
+
+        return Response({'html': rendered_html}, status=status.HTTP_201_CREATED)
+
+@login_required
+def manage_group_member(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    
+    # Check if requester is admin/moderator
+    try:
+        requester_membership = GroupMember.objects.get(user=request.user, group=group)
+        if requester_membership.role not in ['admin', 'moderator']:
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+    except GroupMember.DoesNotExist:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        user_id = request.POST.get('user_id')
+        
+        try:
+            target_user = User.objects.get(id=user_id)
+            
+            if action == 'add':
+                # Add new member
+                member, created = GroupMember.objects.get_or_create(
+                    user=target_user,
+                    group=group,
+                    defaults={'role': 'member'}
+                )
+                
+                if created:
+                    Notification.objects.create(
+                        sender=request.user,
+                        recipient=target_user,
+                        notification_type='group_invite',
+                        content=f'You have been added to the group {group.name}'
+                    )
+                    
+                    # Send WebSocket notification (using your existing pattern)
+                    channel_layer = get_channel_layer()
+                    async_to_sync(channel_layer.group_send)(
+                        f"user_{target_user.id}",
+                        {
+                            "type": "notification_message",
+                            "notification": {
+                                "sender": request.user.username,
+                                "content": f"You have been added to the group {group.name}",
+                                "avatar": f'{request.user.profile.avatar.url}',
+                                "fullname": f'{request.user.first_name} {request.user.last_name}',
+                                "is_read": False
+                            }
+                        }
+                    )
+                    
+                    return JsonResponse({'success': 'Member added successfully'})
+                else:
+                    return JsonResponse({'error': 'User is already a member'})
+                    
+            elif action == 'remove':
+                # Remove member
+                GroupMember.objects.filter(user=target_user, group=group).delete()
+                return JsonResponse({'success': 'Member removed successfully'})
+                
+            elif action == 'change_role':
+                new_role = request.POST.get('role')
+                if new_role not in ['admin', 'moderator', 'member']:
+                    return JsonResponse({'error': 'Invalid role'})
+                    
+                membership = GroupMember.objects.get(user=target_user, group=group)
+                membership.role = new_role
+                membership.save()
+                return JsonResponse({'success': 'Role updated successfully'})
+                
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'})
+
+    return JsonResponse({'error': 'Invalid request'})
+
+

@@ -273,6 +273,7 @@
         </div>
     </div><!-- right sidebar user chat -->
 
+
     {% block content %}
 
     {% endblock %}
@@ -549,9 +550,9 @@
 
 <!-- add emoji -->
 <script>
-    $(document).ready(function() {
-        $('.comment-area').emojioneArea()
-    })
+    //$(document).ready(function() {
+      //  $('.comment-area').emojioneArea()
+    //})
 </script>
 <script>
     window.csrftoken = '{{ csrf_token }}';
@@ -732,8 +733,9 @@
 
             var $form = $(this);
             var postId = $form.find('input[name="post_id"]').val();
-            var content = $form.find('textarea[name="content"]').val();
-
+            var emojioneAreaInstance = $form.find('textarea[name="content"]').data("emojioneArea");
+            var content = emojioneAreaInstance.getText();
+            console.log('content  ', content)
             $.ajax({
                 url: '{% url 'add_comment' %}',  // URL của view xử lý comment
                 method: 'POST',
@@ -755,7 +757,12 @@
                         var currentCount = parseInt($commentCount.text(), 10); // Lấy số đếm hiện tại
                         $commentCount.text(currentCount + 1); // Tăng số đếm lên 1
                         $form.find('textarea[name="content"]').val('');
-                        $('.comment-area').emojioneArea();
+                        {#$('.comment-area').emojioneArea();#}
+                        {#$(".emojionearea-editor").text('');#}
+                        {#$(".emojionearea-editor").html('');#}
+                        emojioneAreaInstance.setText('');
+                        $form.find('textarea[name="content"]').val('')
+
                     }
                 },
                 error: function (xhr, status, error) {
@@ -807,6 +814,7 @@
                         $form.find('textarea[name="content"]').val(''); // Xóa nội dung form
                         $form.closest('.reply-form-container').hide(); // Ẩn form reply
                         $('.comment-area').emojioneArea();
+                        $(".emojionearea-editor").html('');
                     }
                 },
                 error: function (xhr, status, error) {

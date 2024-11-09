@@ -1,0 +1,374 @@
+{% extends './base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% load comment_tags %}
+{% load comment_filters %}
+{% block content %}
+<div class="container">
+    <!-- Group Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                {% if group.cover_image %}
+                    <img src="{{ group.cover_image.url }}" class="card-img-top" alt="Group Cover" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2>{{ group.name }}</h2>
+                        {% if is_member %}
+                            {% if member_role == 'admin' or member_role == 'moderator' %}
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                                    Manage Members
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <p class="text-muted">{{ group.description }}</p>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary">{{ members.count }} Members</span>
+                        {% if group.is_private %}
+                            <span class="badge bg-secondary">Private Group</span>
+                        {% else %}
+                            <span class="badge bg-success">Public Group</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row mt-4">
+        <!-- Posts Column -->
+        <div class="col-md-8">
+            {% if is_member %}
+                <!-- Create Post Form -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form id="createGroupPost" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                                <textarea class="form-control" name="content" rows="3" placeholder="Share something with the group..."></textarea>
+                            
+                                <input type="file" class="form-control" name="images" multiple accept="image/*">
+                            
+                            <button type="submit" class="btn btn-primary">Post</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Posts List -->
+            <div id="posts-container">
+                {% comment %} {% for post in posts %}
+                    {% include 'social/includes/post_card.html' with post=post %}
+                {% empty %}
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <p>No posts in this group yet.</p>
+                        </div>
+                    </div>
+                {% endfor %} {% endcomment %}
+                {% for post in posts %}
+                    {% if post.group %}
+                    <div class="user-post">
+                        <div class="friend-info">
+                            <figure>
+                                <img src="{{ post.user.profile.avatar.url }}" alt="">
+                            </figure>
+                            <div class="friend-name">
+                                <div class="more">
+                                    <div class="more-post-optns"><i class="ti-more-alt"></i>
+                                        <ul>
+                                            {% if request.user == post.user %}
+                                                <li><i class="fa fa-pencil-square-o"></i><a href="{% url 'edit_post' post.id %}">Edit
+                                                    Post</a></li>
+                                                <li><i class="fa fa-trash-o"></i><a href="{% url 'delete_post' post.id %}">Delete
+                                                    post</a></li>
+                                            {% else %}
+                                                <li class="bad-report"><i class="fa fa-flag"></i><a
+                                                        href="{% url 'report_post' post.id %}">Report Post</a></li>
+                                            {% endif %}
+            
+            
+                                        </ul>
+                                    </div>
+                                </div>
+                                <ins><a href="{% url 'user_profile' post.user.id %}" title="">{{ post.user.username }}</a>
+                                </ins>
+                                <span><i class="fa fa-globe"></i> published: {{ post.created_at }} </span>
+                            </div>
+                            <div class="post-meta">
+                                <p>
+                                    {{ post.content }}
+                                </p>
+                                <figure>
+                                    <div class="img-bunch">
+                                        <div class="row">
+                                            {% if post.images %}
+                                                <div class="col">
+                                                    <figure>
+                                                        <a href="#" title="" data-toggle="modal"
+                                                           data-target="#img-comt" class="post-image" data-images='[
+                                                                {% for image in post.images.all %}
+                                                                    "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                                                                {% endfor %}
+                                                            ]'>
+                                                            <img src="{{ post.images.all.0.image.url }}"
+                                                                 alt="">
+                                                        </a>
+                                                    </figure>
+            
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+            
+                                </figure>
+                                <div class="we-video-info">
+                                    <ul>
+            
+                                        <li>
+                                            <div class="likes heart {% if post.id in liked_posts_ids %}happy{% endif %}"
+                                                 title="Like/Dislike" data-post-id="{{ post.id }}">
+                                                ❤ <span class="like-count">{{ post.likes.count }}</span>
+                                            </div>
+                                        </li>
+                                        <li>
+                                        <span class="comment" title="Comments">
+                                            <i class="fa fa-commenting"></i>
+                                            <ins>{{ post.comments.count }}</ins>
+                                        </span>
+                                        </li>
+            
+                                        <li>
+            
+                                        </li>
+                                    </ul>
+            
+                                </div>
+                            </div>
+                            <div class="coment-area">
+                                <ul class="we-comet">
+            
+                                    {% for comment in post.comments.all|root_comments %}
+                                        {% include 'comments/comment_recursive.html' with comment=comment liked_comments_ids=liked_comments_ids %}
+                                    {% endfor %}
+            
+                                    <li class="post-comment">
+                                        <div class="comet-avatar">
+                                            <img src="{{ user.profile.avatar.url }}"
+                                                 alt="">
+                                        </div>
+                                        <div class="post-comt-box">
+                                            <form class="comment-form" method="POST">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="post_id" value="{{ post.id }}">
+                                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                <textarea
+                                                        class="comment-area"
+                                                        name="content"
+                                                        placeholder="Post your comment"></textarea>
+            
+            
+                                                <button type="submit" style="color: black">Add</button>
+                                            </form>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+            
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Members Sidebar -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Members</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for member in members %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ member.user.profile.avatar.url }}" class="rounded-circle" width="40" height="40">
+                                    <div class="ms-2">
+                                        <h6 class="mb-0">{{ member.user.get_full_name }}</h6>
+                                        <small class="text-muted">{{ member.role }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Member Modal -->
+{% if member_role == 'admin' or member_role == 'moderator' %}
+<div class="modal fade" id="addMemberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Members</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="searchUser" class="form-label">Search User</label>
+                        <input type="text" class="form-control" id="searchUser" placeholder="Enter username">
+                    </div>
+                    <div id="searchResults" class="list-group mb-3">
+                        <!-- Search results will be populated here -->
+                    </div>
+                </form>
+                
+                <hr>
+                
+                <h6>Current Members</h6>
+                <div id="membersList" class="list-group">
+                    {% for member in members %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ member.user.get_full_name }}
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" style="width: auto;" 
+                                        onchange="changeRole('{{ member.user.id }}', this.value)"
+                                        {% if member.user == group.creator %}disabled{% endif %}>
+                                    <option value="member" {% if member.role == 'member' %}selected{% endif %}>Member</option>
+                                    <option value="moderator" {% if member.role == 'moderator' %}selected{% endif %}>Moderator</option>
+                                    <option value="admin" {% if member.role == 'admin' %}selected{% endif %}>Admin</option>
+                                </select>
+                                {% if member.user != group.creator %}
+                                    <button class="btn btn-danger btn-sm" onclick="removeMember('{{ member.user.id }}')">
+                                        Remove
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Handle group post creation
+    $('#createGroupPost').on('submit', function(e) {
+        e.preventDefault();
+        let formData = new FormData(this);
+        
+        $.ajax({
+            url: "{% url 'create_group_post' group.id %}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#posts-container').prepend(response.html);
+                $('#createGroupPost')[0].reset();
+            },
+            error: function(xhr) {
+                alert('Error creating post. Please try again.');
+            }
+        });
+    });
+
+    // User search functionality
+    let searchTimeout;
+    $('#searchUser').on('input', function() {
+        clearTimeout(searchTimeout);
+        let query = $(this).val();
+        
+        searchTimeout = setTimeout(function() {
+            if (query.length >= 2) {
+                $.get("{% url 'search_users' %}", { q: query }, function(data) {
+                    let html = '';
+                    data.users.forEach(user => {
+                        html += `
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="${user.avatar_url || '{% static "default_avatar.png" %}'}" 
+                                         class="rounded-circle me-2" 
+                                         width="40" 
+                                         height="40">
+                                    <span>${user.full_name}</span>
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="addMember(${user.id})">
+                                    Add
+                                </button>
+                            </div>
+                        `;
+                    });
+                    if (data.users.length === 0) {
+                        html = '<div class="list-group-item text-center">No users found</div>';
+                    }
+                    $('#searchResults').html(html);
+                });
+            } else {
+                $('#searchResults').empty();
+            }
+        }, 500);
+    });
+});
+
+function addMember(userId) {
+    $.post("{% url 'manage_group_member' group.id %}", {
+        csrfmiddlewaretoken: '{{ csrf_token }}',
+        action: 'add',
+        user_id: userId
+    }, function(response) {
+        if (response.success) {
+            location.reload();
+        } else {
+            alert(response.error);
+        }
+    });
+}
+
+function removeMember(userId) {
+    if (confirm('Are you sure you want to remove this member?')) {
+        $.post("{% url 'manage_group_member' group.id %}", {
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+            action: 'remove',
+            user_id: userId
+        }, function(response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                alert(response.error);
+            }
+        });
+    }
+}
+
+function changeRole(userId, newRole) {
+    $.post("{% url 'manage_group_member' group.id %}", {
+        csrfmiddlewaretoken: '{{ csrf_token }}',
+        action: 'change_role',
+        user_id: userId,
+        role: newRole
+    }, function(response) {
+        if (response.success) {
+            location.reload();
+        } else {
+            alert(response.error);
+        }
+    });
+}
+</script>
+{% endblock %}

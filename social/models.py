@@ -1,7 +1,7 @@
 import shortuuid
 from django.db import models
 from account.models import User
-
+from PIL import Image
 
 class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
@@ -9,7 +9,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_blocked = models.BooleanField(default=False)
-
+    group = models.ForeignKey('Group', on_delete=models.CASCADE, null=True, blank=True, related_name='posts')
 
     def __str__(self):
         return self.content
@@ -137,3 +137,36 @@ class CommentLike(models.Model):
 
     class Meta:
         unique_together = ('comment', 'user')  # Đảm bảo mỗi user chỉ like một comment một lần
+
+
+class Group(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_groups')
+    members = models.ManyToManyField(User, through='GroupMember', related_name='joined_groups')
+    created_at = models.DateTimeField(auto_now_add=True)
+    cover_image = models.ImageField(upload_to='group_covers/', blank=True, null=True)
+    is_private = models.BooleanField(default=False)
+    is_blocked = models.BooleanField(default=False)  # Matching your existing pattern for posts
+
+    def __str__(self):
+        return self.name
+
+
+class GroupMember(models.Model):
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('moderator', 'Moderator'),
+        ('member', 'Member'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='member')
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'group']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.group.name} ({self.role})"

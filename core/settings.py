@@ -73,6 +73,7 @@ TEMPLATES = [
                 'social.context_processors.get_notifications',
                 'social.context_processors.get_friends',
                 'social.context_processors.get_rooms',
+                'social.context_processors.user_groups',
             ],
         },
     },

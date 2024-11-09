@@ -27,7 +27,7 @@
                             </ul>
                         </div>
                     </div>
-                    <ins><a href="{% url 'user_profile' post.user.id %}" title="">{{ post.user.username }}</a>
+                    <ins><a href="{% url 'user_profile' post.user.id %}" title="">{{ post.user.username }}</a> {% if post.group %} in <a href="{% url 'group_detail' post.group.id %}">{{ post.group.name }}</a> {% endif %}
                     </ins>
                     <span><i class="fa fa-globe"></i> published: {{ post.created_at }} </span>
                 </div>
