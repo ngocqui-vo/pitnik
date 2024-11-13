@@ -92,7 +92,7 @@
                     {% if request.user.is_staff %}
                         <li><a href="{% url 'report_list' %}" title=""><i class="ti-target"></i>Reports ports</a></li>
                     {% endif %}
-                    <li><a href="setting.html" title=""><i class="ti-settings"></i>account setting</a></li>
+                    <li><a href="{% url 'user_groups_list' %}" title=""><i class="ti-settings"></i>Groups</a></li>
                     <li><a href="{% url 'user_logout' %}" title=""><i class="ti-power-off"></i>log out</a></li>
                 </ul>
             </div>

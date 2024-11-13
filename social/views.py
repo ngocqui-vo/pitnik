@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow, ReportPost, \
-    CommentLike, Group, GroupMember
+    CommentLike, Group, GroupMember, GroupJoinRequest
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from account.models import User, Profile
@@ -594,10 +594,15 @@ def resolve_the_report(request, report_id):
 @login_required
 def search(request):
     query = request.GET.get('q', '').strip()
-    if not query:  # Nếu query rỗng
-        return render(request, 'social/search-result.html', {'users': [], 'posts': [], 'query': query})
+    if not query:
+        return render(request, 'social/search-result.html', {
+            'users': [], 
+            'posts': [], 
+            'groups': [],
+            'query': query
+        })
 
-    # User search: first_name, last_name, and full name matches
+    # User search
     users = Profile.objects.filter(
         Q(user__first_name__icontains=query) |
         Q(user__last_name__icontains=query) |
@@ -606,13 +611,25 @@ def search(request):
         Q(user__first_name__icontains=query) & Q(user__last_name__icontains=query)
     )
 
-    # Post search based on content
+    # Post search
     posts = Post.objects.filter(content__icontains=query)
 
-    # Render results to the template
+    # Group search
+    groups = Group.objects.filter(
+        Q(name__icontains=query) |
+        Q(description__icontains=query)
+    )
+
+    # Get user's group memberships and pending requests
+    user_group_ids = GroupMember.objects.filter(user=request.user).values_list('group_id', flat=True)
+    pending_requests = GroupJoinRequest.objects.filter(user=request.user).values_list('group_id', flat=True)
+
     return render(request, 'social/search-result.html', {
         'users': users,
         'posts': posts,
+        'groups': groups,
+        'user_group_ids': user_group_ids,
+        'pending_requests': pending_requests,
         'query': query
     })
 
@@ -702,25 +719,42 @@ def create_group(request):
 def group_detail(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     
-    # Check if user can view this group
-    is_member = GroupMember.objects.filter(user=request.user, group=group).exists()
-    if group.is_private and not is_member:
-        raise Http404("You don't have permission to view this group")
-
-    posts = Post.objects.filter(group=group, is_blocked=False).order_by('-created_at')
-    members = GroupMember.objects.filter(group=group)
+    # Check if user is member and get their role
+    try:
+        membership = GroupMember.objects.get(user=request.user, group=group)
+        is_member = True
+        member_role = membership.role
+    except GroupMember.DoesNotExist:
+        is_member = False
+        member_role = None
     
-    member_role = None
-    if is_member:
-        member_role = GroupMember.objects.get(user=request.user, group=group).role
-
+    # Get pending join request if exists
+    pending_request = None
+    if not is_member:
+        pending_request = GroupJoinRequest.objects.filter(
+            user=request.user,
+            group=group,
+            status='pending'
+        ).first()
+    
+    # Get pending requests for admins/moderators
+    pending_requests = []
+    if member_role in ['admin', 'moderator']:
+        pending_requests = GroupJoinRequest.objects.filter(
+            group=group,
+            status='pending'
+        ).select_related('user__profile')
+    
     context = {
         'group': group,
-        'posts': posts,
-        'members': members,
         'is_member': is_member,
         'member_role': member_role,
+        'members': GroupMember.objects.filter(group=group).select_related('user__profile'),
+        'posts': Post.objects.filter(group=group).order_by('-created_at'),
+        'pending_request': pending_request,
+        'pending_requests': pending_requests,
     }
+    
     return render(request, 'social/group_detail.html', context)
 
 class GroupPostCreateView(PostCreateView):
@@ -822,4 +856,118 @@ def manage_group_member(request, group_id):
 
     return JsonResponse({'error': 'Invalid request'})
 
+
+@login_required
+def user_groups_list(request):
+    if request.user.is_authenticated:
+        user_groups = GroupMember.objects.filter(user=request.user).select_related('group')
+        
+        # Add pending posts count for each group
+        for membership in user_groups:
+            membership.pending_posts_count = Post.objects.filter(
+                group=membership.group
+            ).count()
+            
+        return render(request, 'social/user_groups_list.html', {'user_groups': user_groups})
+    return JsonResponse({'error': 'Invalid request'})
+
+@login_required
+def request_join_group(request, group_id):
+    if request.method == 'POST':
+        group = get_object_or_404(Group, id=group_id)
+        
+        # Check if user is already a member
+        if GroupMember.objects.filter(user=request.user, group=group).exists():
+            return JsonResponse({'error': 'You are already a member'}, status=400)
+            
+        # Check if there's already a pending request
+        if GroupJoinRequest.objects.filter(user=request.user, group=group, status='pending').exists():
+            return JsonResponse({'error': 'You already have a pending request'}, status=400)
+            
+        # Create join request
+        join_request = GroupJoinRequest.objects.create(
+            user=request.user,
+            group=group
+        )
+        
+        # Notify group admins
+        admin_members = GroupMember.objects.filter(group=group, role='admin')
+        for admin in admin_members:
+            Notification.objects.create(
+                sender=request.user,
+                recipient=admin.user,
+                notification_type='group_join_request',
+                content=f'{request.user.first_name} {request.user.last_name} requested to join {group.name}',
+                group=group
+            )
+            
+            # Send WebSocket notification
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"user_{admin.user.id}",
+                {
+                    "type": "notification_message",
+                    "notification": {
+                        "sender": request.user.username,
+                        "content": f"{request.user.first_name} {request.user.last_name} requested to join {group.name}",
+                        "avatar": f'{request.user.profile.avatar.url}',
+                        "fullname": f'{request.user.first_name} {request.user.last_name}',
+                        "is_read": False
+                    }
+                }
+            )
+            
+        return JsonResponse({'success': 'Join request sent successfully'})
+        
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def handle_join_request(request, request_id):
+    if request.method == 'POST':
+        join_request = get_object_or_404(GroupJoinRequest, id=request_id)
+        action = request.POST.get('action')
+        
+        # Check if user is admin
+        if not GroupMember.objects.filter(
+            user=request.user, 
+            group=join_request.group, 
+            role='admin'
+        ).exists():
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+            
+        if action == 'accept':
+            # Create group member
+            GroupMember.objects.create(
+                user=join_request.user,
+                group=join_request.group,
+                role='member'
+            )
+            join_request.status = 'accepted'
+            join_request.save()
+            
+            # Notify user
+            Notification.objects.create(
+                sender=request.user,
+                recipient=join_request.user,
+                notification_type='group_join_accepted',
+                content=f'Your request to join {join_request.group.name} has been accepted',
+                group=join_request.group
+            )
+            
+        elif action == 'reject':
+            join_request.status = 'rejected'
+            join_request.save()
+            
+            # Notify user
+            Notification.objects.create(
+                sender=request.user,
+                recipient=join_request.user,
+                notification_type='group_join_rejected',
+                content=f'Your request to join {join_request.group.name} has been rejected',
+                group=join_request.group
+            )
+            
+        return JsonResponse({'success': f'Request {action}ed successfully'})
+        
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 

@@ -35,11 +35,15 @@ urlpatterns = [
     path('user/search/', views.search, name='search'),
 
     path('group/create/', views.create_group, name='create_group'),
+    path('group/list/', views.user_groups_list, name='user_groups_list'),
     path('group/<int:group_id>/', views.group_detail, name='group_detail'),
     path('group/<int:group_id>/post/', views.GroupPostCreateView.as_view(), name='create_group_post'),
     path('group/<int:group_id>/members/', views.manage_group_member, name='manage_group_member'),
-
+    
     path('search-users/', views.search_users, name='search_users'),
+
+    path('group/<int:group_id>/join-request/', views.request_join_group, name='request_join_group'),
+    path('group/join-request/<int:request_id>/handle/', views.handle_join_request, name='handle_join_request'),
 
 ]
 

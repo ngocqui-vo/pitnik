@@ -1,0 +1,147 @@
+{% extends './base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="central-meta">
+                <div class="groups">
+                    <span><i class="fa fa-users"></i> Your Groups</span>
+                </div>
+                <div class="row merged20">
+                    <!-- Create Group Button -->
+                    <div class="col-lg-12 mb-4">
+                        <a href="{% url 'create_group' %}" class="btn btn-primary">
+                            <i class="fa fa-plus"></i> Create New Group
+                        </a>
+                    </div>
+
+                    {% if user_groups %}
+                        {% for membership in user_groups %}
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card group-card mb-4">
+                                <!-- Group Cover Image -->
+                                <div class="group-cover">
+                                    {% if membership.group.cover_image %}
+                                        <img src="{{ membership.group.cover_image.url }}" alt="Group Cover" class="card-img-top">
+                                    {% else %}
+                                        <div class="default-cover bg-secondary"></div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="group-info">
+                                        <h5 class="card-title">
+                                            <a href="{% url 'group_detail' membership.group.id %}">
+                                                {{ membership.group.name }}
+                                            </a>
+                                        </h5>
+                                        <p class="text-muted mb-2">
+                                            {{ membership.group.description|truncatechars:100 }}
+                                        </p>
+                                    </div>
+
+                                    <div class="group-meta">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="member-count">
+                                                <i class="fa fa-users"></i> 
+                                                {{ membership.group.members.count }} members
+                                            </span>
+                                            <span class="role-badge 
+                                                {% if membership.role == 'admin' %}badge bg-danger{% elif membership.role == 'moderator' %}badge bg-warning{% else %}badge bg-info{% endif %}">
+                                                {{ membership.get_role_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {% if membership.role == 'admin' or membership.role == 'moderator' %}
+                                        <div class="group-actions mt-3">
+                                            {% with pending_posts=membership.group.post_set.all %}
+                                                {% with pending_count=pending_posts %}
+                                                    {% if pending_count > 0 %}
+                                                        <a href="{% url 'manage_pending_posts' membership.group.id %}" 
+                                                           class="btn btn-warning btn-sm">
+                                                            Pending Posts <span class="badge bg-light text-dark">{{ pending_count }}</span>
+                                                        </a>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endwith %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="card-footer">
+                                    <div class="group-privacy">
+                                        <small class="text-muted">
+                                            <i class="fa {% if membership.group.is_private %}fa-lock{% else %}fa-globe{% endif %}"></i>
+                                            {{ membership.group.is_private|yesno:"Private,Public" }} Group
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5>You haven't joined any groups yet</h5>
+                                    <p class="text-muted">Create a new group or discover existing ones to get started!</p>
+                                    <a href="{% url 'discover_groups' %}" class="btn btn-primary">
+                                        Discover Groups
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.group-card {
+    transition: transform 0.2s;
+    height: 100%;
+}
+
+.group-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.group-cover {
+    height: 150px;
+    overflow: hidden;
+}
+
+.group-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.default-cover {
+    height: 150px;
+}
+
+.role-badge {
+    font-size: 0.8rem;
+}
+
+.group-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.member-count {
+    font-size: 0.9rem;
+}
+
+.group-privacy {
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}

@@ -52,6 +52,48 @@
 											</div><!-- searched peoples -->
 										</div>
 									</div>
+									<!-- Add this after the users section -->
+<div class="central-meta item" id="content-groups">
+    <span class="create-post">Groups</span>
+    {% if groups %}
+        {% for group in groups %}
+        <div class="group-item d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center">
+                {% if group.cover_image %}
+                    <img src="{{ group.cover_image.url }}" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                {% else %}
+                    <div class="rounded me-3 bg-secondary" style="width: 60px; height: 60px;"></div>
+                {% endif %}
+                
+                <div>
+                    <h6 class="mb-1">
+                        <a href="{% url 'group_detail' group.id %}">{{ group.name }}</a>
+                        {% if group.is_private %}
+                            <i class="fa fa-lock text-muted small"></i>
+                        {% endif %}
+                    </h6>
+                    <small class="text-muted">{{ group.members.count }} members</small>
+                </div>
+            </div>
+            
+            <div>
+                {% if group.id in user_group_ids %}
+                    <button class="btn btn-secondary btn-sm" disabled>Member</button>
+                {% elif group.id in pending_requests %}
+                    <button class="btn btn-warning btn-sm" disabled>Request Pending</button>
+                {% else %}
+                    <button class="btn btn-primary btn-sm join-group-btn" 
+                            data-group-id="{{ group.id }}">
+                        Request to Join
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No groups found matching "{{ query }}".</p>
+    {% endif %}
+</div>
 									<!-- Display Search Results for Posts -->
 									<div class="tab-content">
 										<div class="tab-pane active fade show" id="content-posts">
@@ -315,5 +357,32 @@
         });
     });
 </script>
-
+<script>
+	$(document).ready(function() {
+		$('.join-group-btn').click(function() {
+			const groupId = $(this).data('group-id');
+			const button = $(this);
+			console.log(groupId)
+			$.ajax({
+				url: `/group/${groupId}/join-request/`,
+				method: 'POST',
+				headers: {
+					'X-CSRFToken': '{{ csrf_token }}'
+				},
+				success: function(response) {
+					button.removeClass('btn-primary')
+						.addClass('btn-warning')
+						.prop('disabled', true)
+						.text('Request Pending');
+						
+					// Optional: Show success message
+					alert('Join request sent successfully');
+				},
+				error: function(xhr) {
+					alert(xhr.responseJSON?.error || 'Error sending join request');
+				}
+			});
+		});
+	});
+	</script>
 {% endblock %}
