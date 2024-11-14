@@ -102,6 +102,7 @@ class Message(models.Model):
 class Notification(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    group = models.ForeignKey('Group', on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
     notification_type = models.CharField(max_length=100, choices=[
         ('friend_request', 'Friend Request'),
         ('new_message', 'New Message'),
@@ -113,6 +114,7 @@ class Notification(models.Model):
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     is_actioned = models.BooleanField(default=False)
+
 
     def __str__(self):
         return f'{self.recipient.username} - {self.notification_type} - {self.is_read} - {self.content}'

@@ -616,9 +616,10 @@ def search(request):
 
     # Group search
     groups = Group.objects.filter(
-        Q(name__icontains=query) |
-        Q(description__icontains=query)
-    )
+    (Q(name__icontains=query) |
+     Q(description__icontains=query)) &
+    Q(is_private=False)
+)
 
     # Get user's group memberships and pending requests
     user_group_ids = GroupMember.objects.filter(user=request.user).values_list('group_id', flat=True)
