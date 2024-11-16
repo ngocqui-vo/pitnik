@@ -38,25 +38,32 @@
                     <figure>
                         <div class="img-bunch">
                             <div class="row">
-                                {% if post.images %}
+                                {% if post.images.all %}
                                     <div class="col">
-                                        <figure>
+                                        <figure class="position-relative">
                                             <a href="#" title="" data-toggle="modal"
-                                               data-target="#img-comt" class="post-image" data-images='[
+                                               data-target="#img-comt" 
+                                               class="post-image" 
+                                               data-images='[
                                                     {% for image in post.images.all %}
                                                         "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
                                                     {% endfor %}
                                                 ]'>
-                                                <img src="{{ post.images.all.0.image.url }}"
-                                                     alt="">
+                                                <img src="{{ post.images.all.0.image.url }}" alt="">
+                                                
+                                                {% if post.images.all|length > 1 %}
+                                                    <div class="multiple-images-indicator">
+                                                        <span class="badge bg-dark position-absolute bottom-0 end-0 m-2">
+                                                            <i class="fa fa-images"></i> +{{ post.images.all|length|add:"-1" }}
+                                                        </span>
+                                                    </div>
+                                                {% endif %}
                                             </a>
                                         </figure>
-
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
-
                     </figure>
                     <div class="we-video-info">
                         <ul>
