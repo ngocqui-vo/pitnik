@@ -45,5 +45,7 @@ urlpatterns = [
     path('group/<int:group_id>/join-request/', views.request_join_group, name='request_join_group'),
     path('group/join-request/<int:request_id>/handle/', views.handle_join_request, name='handle_join_request'),
 
+    path('group/post/<int:post_id>/handle/', views.handle_pending_post, name='handle_pending_post'),
+
 ]
 

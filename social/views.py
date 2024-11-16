@@ -746,12 +746,27 @@ def group_detail(request, group_id):
             status='pending'
         ).select_related('user__profile')
     
+    # Get posts based on user role
+    if member_role in ['admin', 'moderator']:
+        posts = Post.objects.filter(group=group).order_by('-created_at')
+        pending_posts = Post.objects.filter(
+            group=group, 
+            status='pending'
+        ).order_by('-created_at')
+    else:
+        posts = Post.objects.filter(
+            group=group, 
+            status='approved'
+        ).order_by('-created_at')
+        pending_posts = []
+    
     context = {
         'group': group,
         'is_member': is_member,
         'member_role': member_role,
         'members': GroupMember.objects.filter(group=group).select_related('user__profile'),
-        'posts': Post.objects.filter(group=group).order_by('-created_at'),
+        'posts': posts,
+        'pending_posts': pending_posts,
         'pending_request': pending_request,
         'pending_requests': pending_requests,
     }
@@ -770,17 +785,38 @@ class GroupPostCreateView(PostCreateView):
         images = request.FILES.getlist('images')
         user = request.user
 
-        # Create post with group
-        post = Post.objects.create(user=user, content=content, group=group)
+        # Create post with pending status for group posts
+        post = Post.objects.create(
+            user=user, 
+            content=content, 
+            group=group,
+            status='pending'  # Set as pending by default
+        )
 
         # Save images
         for image in images:
             ImagePost.objects.create(post=post, image=image)
 
-        context = {'post': post, 'images': images, 'user': user, 'group': group}
-        rendered_html = render_to_string('ajax/created_post.html', context)
+        # Notify moderators and admins about the pending post
+        moderators = GroupMember.objects.filter(
+            group=group, 
+            role__in=['admin', 'moderator']
+        ).select_related('user')
 
-        return Response({'html': rendered_html}, status=status.HTTP_201_CREATED)
+        for mod in moderators:
+            Notification.objects.create(
+                sender=user,
+                recipient=mod.user,
+                notification_type='pending_post',
+                content=f'New pending post in {group.name} needs approval',
+                group=group
+            )
+
+        context = {'post': post, 'images': images, 'user': user, 'group': group}
+        return Response({
+            'html': render_to_string('ajax/created_post.html', context),
+            'message': 'Your post has been submitted and is pending approval'
+        }, status=status.HTTP_201_CREATED)
 
 @login_required
 def manage_group_member(request, group_id):
@@ -969,6 +1005,46 @@ def handle_join_request(request, request_id):
             )
             
         return JsonResponse({'success': f'Request {action}ed successfully'})
+        
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def handle_pending_post(request, post_id):
+    if request.method == 'POST':
+        post = get_object_or_404(Post, id=post_id)
+        action = request.POST.get('action')
+        
+        # Check if user is moderator/admin of the group
+        if not post.group.can_manage_posts(request.user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+            
+        if action == 'approve':
+            post.status = 'approved'
+            post.save()
+            
+            # Notify post creator
+            Notification.objects.create(
+                sender=request.user,
+                recipient=post.user,
+                notification_type='post_approved',
+                content=f'Your post in {post.group.name} has been approved',
+                group=post.group
+            )
+            
+        elif action == 'reject':
+            post.status = 'rejected'
+            post.save()
+            
+            # Notify post creator
+            Notification.objects.create(
+                sender=request.user,
+                recipient=post.user,
+                notification_type='post_rejected',
+                content=f'Your post in {post.group.name} has been rejected',
+                group=post.group
+            )
+            
+        return JsonResponse({'success': f'Post {action}d successfully'})
         
     return JsonResponse({'error': 'Invalid request'}, status=400)
 

@@ -598,6 +598,38 @@
 {% block scripts %}
 
 {% endblock %}
+<!-- Xử lý handle post -->
+<script>
+    $(document).ready(function() {
+        
+        $('.handle-post').click(function() {
+            const button = $(this);
+            const postId = button.data('post-id');
+            const action = button.data('action');
+            
+            $.ajax({
+                url: `/group/post/${postId}/handle/`,
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                data: {
+                    action: action
+                },
+                success: function(response) {
+                    // Remove the pending post from the list
+                    $(`#pending-post-${postId}`).fadeOut();
+                    
+                    // Optional: Show success message
+                    alert(`Post ${action}ed successfully`);
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.error || 'Error handling post');
+                }
+            });
+        });
+    });
+    </script>
 <!-- hiện modal ảnh -->
 <script>
     $(document).ready(function () {

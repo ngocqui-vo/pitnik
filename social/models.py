@@ -4,12 +4,19 @@ from account.models import User
 from PIL import Image
 
 class Post(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected')
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_blocked = models.BooleanField(default=False)
     group = models.ForeignKey('Group', on_delete=models.CASCADE, null=True, blank=True, related_name='posts')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='approved')  # Default approved for non-group posts
 
     def __str__(self):
         return self.content
@@ -149,7 +156,15 @@ class Group(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     cover_image = models.ImageField(upload_to='group_covers/', blank=True, null=True)
     is_private = models.BooleanField(default=False)
-    is_blocked = models.BooleanField(default=False)  # Matching your existing pattern for posts
+    is_blocked = models.BooleanField(default=False)
+
+    def can_manage_posts(self, user):
+        """Check if user can manage posts (approve/reject/delete)"""
+        return GroupMember.objects.filter(
+            user=user,
+            group=self,
+            role__in=['admin', 'moderator']
+        ).exists()
 
     def __str__(self):
         return self.name
