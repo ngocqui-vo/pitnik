@@ -49,7 +49,7 @@ def post_list(request):
         'posts': result_page,  # Dữ liệu đã phân trang
         'user': request.user,
         'liked_posts_ids': liked_posts_ids,  # Thêm danh sách ID bài viết đã "like",
-        'liked_comments_ids': liked_comments_ids,  # ID comment mà người dùng đã "like"
+        'liked_comments_ids': liked_comments_ids,  # ID comment mà người dùng ��ã "like"
     }
 
     # Render template với context đã tạo
@@ -720,15 +720,29 @@ def create_group(request):
 def group_detail(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     
-    # Check if user is member and get their role
+    # Get member status and role
     try:
-        membership = GroupMember.objects.get(user=request.user, group=group)
+        member = GroupMember.objects.get(user=request.user, group=group)
         is_member = True
-        member_role = membership.role
+        member_role = member.role
     except GroupMember.DoesNotExist:
         is_member = False
         member_role = None
-    
+
+    # Get posts based on user role
+    if member_role == 'admin':  # Remove moderator check
+        posts = Post.objects.filter(group=group, status='approved').order_by('-created_at')
+        pending_posts = Post.objects.filter(
+            group=group, 
+            status='pending'
+        ).order_by('-created_at')
+    else:
+        posts = Post.objects.filter(
+            group=group, 
+            status='approved'
+        ).order_by('-created_at')
+        pending_posts = []
+
     # Get pending join request if exists
     pending_request = None
     if not is_member:
@@ -745,20 +759,6 @@ def group_detail(request, group_id):
             group=group,
             status='pending'
         ).select_related('user__profile')
-    
-    # Get posts based on user role
-    if member_role in ['admin', 'moderator']:
-        posts = Post.objects.filter(group=group).order_by('-created_at')
-        pending_posts = Post.objects.filter(
-            group=group, 
-            status='pending'
-        ).order_by('-created_at')
-    else:
-        posts = Post.objects.filter(
-            group=group, 
-            status='approved'
-        ).order_by('-created_at')
-        pending_posts = []
     
     context = {
         'group': group,
@@ -821,11 +821,10 @@ class GroupPostCreateView(PostCreateView):
 @login_required
 def manage_group_member(request, group_id):
     group = get_object_or_404(Group, id=group_id)
-    
-    # Check if requester is admin/moderator
+    # Check if requester is admin
     try:
         requester_membership = GroupMember.objects.get(user=request.user, group=group)
-        if requester_membership.role not in ['admin', 'moderator']:
+        if requester_membership.role != 'admin':  # Remove moderator check
             return JsonResponse({'error': 'Permission denied'}, status=403)
     except GroupMember.DoesNotExist:
         return JsonResponse({'error': 'Permission denied'}, status=403)
@@ -880,7 +879,7 @@ def manage_group_member(request, group_id):
                 
             elif action == 'change_role':
                 new_role = request.POST.get('role')
-                if new_role not in ['admin', 'moderator', 'member']:
+                if new_role not in ['admin', 'member']:
                     return JsonResponse({'error': 'Invalid role'})
                     
                 membership = GroupMember.objects.get(user=target_user, group=group)

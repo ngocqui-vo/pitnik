@@ -17,7 +17,7 @@
                         <h2>{{ group.name }}</h2>
                         <div class="d-flex gap-2">
                             {% if is_member %}
-                                {% if member_role == 'admin' or member_role == 'moderator' %}
+                                {% if member_role == 'admin' %}
                                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
                                         Manage Members
                                     </button>
@@ -223,7 +223,7 @@
                     </div>
                 </div>
             </div>
-            {% if member_role in 'admin,moderator' and pending_posts %}
+            {% if member_role == 'admin' and pending_posts %}
     <div class="card mb-4">
     <div class="card-header">
         <h5 class="mb-0">Pending Posts</h5>
@@ -272,7 +272,7 @@
 </div>
 
 <!-- Add Member Modal -->
-{% if member_role == 'admin' or member_role == 'moderator' %}
+{% if member_role == 'admin' %}
 <div class="modal fade" id="addMemberModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -304,7 +304,6 @@
                                         onchange="changeRole('{{ member.user.id }}', this.value)"
                                         {% if member.user == group.creator %}disabled{% endif %}>
                                     <option value="member" {% if member.role == 'member' %}selected{% endif %}>Member</option>
-                                    <option value="moderator" {% if member.role == 'moderator' %}selected{% endif %}>Moderator</option>
                                     <option value="admin" {% if member.role == 'admin' %}selected{% endif %}>Admin</option>
                                 </select>
                                 {% if member.user != group.creator %}
@@ -323,7 +322,7 @@
 {% endif %}
 
 <!-- Add this new modal for pending requests -->
-{% if member_role == 'admin' or member_role == 'moderator' %}
+{% if member_role == 'admin' %}
 <div class="modal fade" id="pendingRequestsModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">

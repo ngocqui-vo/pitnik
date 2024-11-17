@@ -163,7 +163,7 @@ class Group(models.Model):
         return GroupMember.objects.filter(
             user=user,
             group=self,
-            role__in=['admin', 'moderator']
+            role='admin'
         ).exists()
 
     def __str__(self):
@@ -172,14 +172,13 @@ class Group(models.Model):
 
 class GroupMember(models.Model):
     ROLE_CHOICES = [
-        ('admin', 'Admin'),
-        ('moderator', 'Moderator'),
         ('member', 'Member'),
+        ('admin', 'Admin')
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='member')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='member')
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

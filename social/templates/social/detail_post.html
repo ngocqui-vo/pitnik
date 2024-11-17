@@ -1,0 +1,38 @@
+{% extends './base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}
+
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Post detail</h1>
+
+        <!-- Nội dung bài đăng -->
+
+
+        <div class="card">
+            <label for="content">Content:</label>
+            <p>{{ post.content }}</p>
+
+
+            <!-- Hình ảnh hiện tại -->
+            <h5 class="mt-4">Images</h5>
+            <div class="row">
+                {% for image in images %}
+                    <div class="col-md-3 mb-3">
+                        <div class="card">
+                            <img src="{{ image.image.url }}" class="card-img-top" alt="Image"
+                                 style="height: 150px; object-fit: cover;">
+
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        
+
+    </div>
+{% endblock %}
