@@ -733,7 +733,7 @@ def create_group(request):
 def group_detail(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     
-    # Get member status and role
+    # Check if group is private and user is not a member
     try:
         member = GroupMember.objects.get(user=request.user, group=group)
         is_member = True
@@ -741,9 +741,25 @@ def group_detail(request, group_id):
     except GroupMember.DoesNotExist:
         is_member = False
         member_role = None
+        
+        # If group is private and user is not a member, show restricted access message
+        if group.is_private:
+            pending_request = GroupJoinRequest.objects.filter(
+                user=request.user,
+                group=group,
+                status='pending'
+            ).first()
+            
+            context = {
+                'group': group,
+                'is_member': False,
+                'is_private': True,
+                'pending_request': pending_request
+            }
+            return render(request, 'social/group_detail.html', context)
 
-    # Get posts based on user role
-    if member_role == 'admin':  # Remove moderator check
+    # Rest of the view for members or public groups
+    if member_role == 'admin':
         posts = Post.objects.filter(group=group, status='approved').order_by('-created_at')
         pending_posts = Post.objects.filter(
             group=group, 
@@ -756,18 +772,9 @@ def group_detail(request, group_id):
         ).order_by('-created_at')
         pending_posts = []
 
-    # Get pending join request if exists
-    pending_request = None
-    if not is_member:
-        pending_request = GroupJoinRequest.objects.filter(
-            user=request.user,
-            group=group,
-            status='pending'
-        ).first()
-    
-    # Get pending requests for admins/moderators
+    # Get pending requests for admins
     pending_requests = []
-    if member_role in ['admin', 'moderator']:
+    if member_role == 'admin':
         pending_requests = GroupJoinRequest.objects.filter(
             group=group,
             status='pending'
@@ -780,8 +787,8 @@ def group_detail(request, group_id):
         'members': GroupMember.objects.filter(group=group).select_related('user__profile'),
         'posts': posts,
         'pending_posts': pending_posts,
-        'pending_request': pending_request,
         'pending_requests': pending_requests,
+        'is_private': group.is_private
     }
     
     return render(request, 'social/group_detail.html', context)
@@ -1063,4 +1070,16 @@ def handle_pending_post(request, post_id):
         return JsonResponse({'success': f'Post {action}d successfully'})
         
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def discover_groups(request):
+    # Get all public groups that the user hasn't joined
+    user_groups = request.user.joined_groups.all()
+    groups = Group.objects.filter(
+        is_private=False
+    ).exclude(
+        id__in=user_groups.values_list('id', flat=True)
+    ).order_by('-created_at')
+    
+    return render(request, 'social/discover_groups.html', {'groups': groups})
 

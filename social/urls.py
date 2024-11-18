@@ -47,5 +47,7 @@ urlpatterns = [
 
     path('group/post/<int:post_id>/handle/', views.handle_pending_post, name='handle_pending_post'),
 
+    path('groups/discover/', views.discover_groups, name='discover_groups'),
+
 ]
 

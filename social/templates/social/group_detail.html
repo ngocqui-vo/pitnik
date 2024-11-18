@@ -3,6 +3,7 @@
 {% load custom_filters %}
 {% load comment_tags %}
 {% load comment_filters %}
+
 {% block content %}
 <div class="container">
     <!-- Group Header -->
@@ -52,223 +53,240 @@
         </div>
     </div>
 
-
-    <!-- Main Content -->
-    <div class="row mt-4">
-        <!-- Posts Column -->
-        <div class="col-md-8">
-            {% if is_member %}
-                <!-- Create Post Form -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <form id="createGroupPost" method="POST" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            
-                                <textarea class="form-control" name="content" rows="3" placeholder="Share something with the group..."></textarea>
-                            
-                                <input type="file" class="form-control" name="images" multiple accept="image/*">
-                            
-                            <button type="submit" class="btn btn-primary">Post</button>
-                        </form>
-                    </div>
-                </div>
-            {% endif %}
-
-            <!-- Posts List -->
-            <div id="posts-container">
-                {% comment %} {% for post in posts %}
-                    {% include 'social/includes/post_card.html' with post=post %}
-                {% empty %}
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <p>No posts in this group yet.</p>
+    {% if group.is_private and not is_member %}
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <i class="fa fa-lock fa-3x mb-3 text-muted"></i>
+                <h4>This is a Private Group</h4>
+                <p class="text-muted">You need to be a member to see the content of this group.</p>
+                
+                {% if pending_request %}
+                    <button class="btn btn-warning" disabled>Request Pending</button>
+                {% else %}
+                    <button class="btn btn-primary join-group-btn" data-group-id="{{ group.id }}">
+                        Request to Join
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <!-- Your existing content for posts, etc. -->
+        <div class="row mt-4">
+            <!-- Posts Column -->
+            <div class="col-md-8">
+                {% if is_member %}
+                    <!-- Create Post Form -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <form id="createGroupPost" method="POST" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                
+                                    <textarea class="form-control" name="content" rows="3" placeholder="Share something with the group..."></textarea>
+                                
+                                    <input type="file" class="form-control" name="images" multiple accept="image/*">
+                                
+                                <button type="submit" class="btn btn-primary">Post</button>
+                            </form>
                         </div>
                     </div>
-                {% endfor %} {% endcomment %}
-                {% for post in posts %}
-                    {% if post.group %}
-                    <div class="user-post">
-                        <div class="friend-info">
-                            <figure>
-                                <img src="{{ post.user.profile.avatar.url }}" alt="">
-                            </figure>
-                            <div class="friend-name">
-                                <div class="more">
-                                    <div class="more-post-optns"><i class="ti-more-alt"></i>
-                                        <ul>
-                                            {% if request.user == post.user %}
-                                                <li><i class="fa fa-pencil-square-o"></i><a href="{% url 'edit_post' post.id %}">Edit
-                                                    Post</a></li>
-                                                <li><i class="fa fa-trash-o"></i><a href="{% url 'delete_post' post.id %}">Delete
-                                                    post</a></li>
-                                            {% else %}
-                                                <li class="bad-report"><i class="fa fa-flag"></i><a
-                                                        href="{% url 'report_post' post.id %}">Report Post</a></li>
-                                            {% endif %}
-            
-            
-                                        </ul>
-                                    </div>
-                                </div>
-                                <ins><a href="{% url 'user_profile' post.user.id %}" title="">{{ post.user.username }}</a>
-                                </ins>
-                                <span><i class="fa fa-globe"></i> published: {{ post.created_at }} </span>
+                {% endif %}
+
+                <!-- Posts List -->
+                <div id="posts-container">
+                    {% comment %} {% for post in posts %}
+                        {% include 'social/includes/post_card.html' with post=post %}
+                    {% empty %}
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <p>No posts in this group yet.</p>
                             </div>
-                            <div class="post-meta">
-                                <p>
-                                    {{ post.content }}
-                                </p>
+                        </div>
+                    {% endfor %} {% endcomment %}
+                    {% for post in posts %}
+                        {% if post.group %}
+                        <div class="user-post">
+                            <div class="friend-info">
                                 <figure>
-                                    <div class="img-bunch">
-                                        <div class="row">
-                                            {% if post.images %}
-                                                <div class="col">
-                                                    <figure>
-                                                        <a href="#" title="" data-toggle="modal"
-                                                           data-target="#img-comt" class="post-image" data-images='[
-                                                                {% for image in post.images.all %}
-                                                                    "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
-                                                                {% endfor %}
-                                                            ]'>
-                                                            <img src="{{ post.images.all.0.image.url }}"
-                                                                 alt="">
-                                                        </a>
-                                                    </figure>
+                                    <img src="{{ post.user.profile.avatar.url }}" alt="">
+                                </figure>
+                                <div class="friend-name">
+                                    <div class="more">
+                                        <div class="more-post-optns"><i class="ti-more-alt"></i>
+                                            <ul>
+                                                {% if request.user == post.user %}
+                                                    <li><i class="fa fa-pencil-square-o"></i><a href="{% url 'edit_post' post.id %}">Edit
+                                                        Post</a></li>
+                                                    <li><i class="fa fa-trash-o"></i><a href="{% url 'delete_post' post.id %}">Delete
+                                                        post</a></li>
+                                                {% else %}
+                                                    <li class="bad-report"><i class="fa fa-flag"></i><a
+                                                            href="{% url 'report_post' post.id %}">Report Post</a></li>
+                                                {% endif %}
             
-                                                </div>
-                                            {% endif %}
+            
+                                            </ul>
                                         </div>
                                     </div>
+                                    <ins><a href="{% url 'user_profile' post.user.id %}" title="">{{ post.user.username }}</a>
+                                    </ins>
+                                    <span><i class="fa fa-globe"></i> published: {{ post.created_at }} </span>
+                                </div>
+                                <div class="post-meta">
+                                    <p>
+                                        {{ post.content }}
+                                    </p>
+                                    <figure>
+                                        <div class="img-bunch">
+                                            <div class="row">
+                                                {% if post.images %}
+                                                    <div class="col">
+                                                        <figure>
+                                                            <a href="#" title="" data-toggle="modal"
+                                                               data-target="#img-comt" class="post-image" data-images='[
+                                                                    {% for image in post.images.all %}
+                                                                        "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                                                                    {% endfor %}
+                                                                ]'>
+                                                                <img src="{{ post.images.all.0.image.url }}"
+                                                                     alt="">
+                                                            </a>
+                                                        </figure>
             
-                                </figure>
-                                <div class="we-video-info">
-                                    <ul>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
             
-                                        <li>
-                                            <div class="likes heart {% if post.id in liked_posts_ids %}happy{% endif %}"
-                                                 title="Like/Dislike" data-post-id="{{ post.id }}">
-                                                ❤ <span class="like-count">{{ post.likes.count }}</span>
+                                    </figure>
+                                    <div class="we-video-info">
+                                        <ul>
+            
+                                            <li>
+                                                <div class="likes heart {% if post.id in liked_posts_ids %}happy{% endif %}"
+                                                     title="Like/Dislike" data-post-id="{{ post.id }}">
+                                                    ❤ <span class="like-count">{{ post.likes.count }}</span>
+                                                </div>
+                                            </li>
+                                            <li>
+                                            <span class="comment" title="Comments">
+                                                <i class="fa fa-commenting"></i>
+                                                <ins>{{ post.comments.count }}</ins>
+                                            </span>
+                                            </li>
+            
+                                            <li>
+            
+                                            </li>
+                                        </ul>
+            
+                                    </div>
+                                </div>
+                                <div class="coment-area">
+                                    <ul class="we-comet">
+            
+                                        {% for comment in post.comments.all|root_comments %}
+                                            {% include 'comments/comment_recursive.html' with comment=comment liked_comments_ids=liked_comments_ids %}
+                                        {% endfor %}
+            
+                                        <li class="post-comment">
+                                            <div class="comet-avatar">
+                                                <img src="{{ user.profile.avatar.url }}"
+                                                     alt="">
+                                            </div>
+                                            <div class="post-comt-box">
+                                                <form class="comment-form" method="POST">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="post_id" value="{{ post.id }}">
+                                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                    <textarea
+                                                            class="comment-area"
+                                                            name="content"
+                                                            placeholder="Post your comment"></textarea>
+            
+            
+                                                    <button type="submit" style="color: black">Add</button>
+                                                </form>
                                             </div>
                                         </li>
-                                        <li>
-                                        <span class="comment" title="Comments">
-                                            <i class="fa fa-commenting"></i>
-                                            <ins>{{ post.comments.count }}</ins>
-                                        </span>
-                                        </li>
-            
-                                        <li>
-            
-                                        </li>
                                     </ul>
-            
                                 </div>
                             </div>
-                            <div class="coment-area">
-                                <ul class="we-comet">
             
-                                    {% for comment in post.comments.all|root_comments %}
-                                        {% include 'comments/comment_recursive.html' with comment=comment liked_comments_ids=liked_comments_ids %}
-                                    {% endfor %}
-            
-                                    <li class="post-comment">
-                                        <div class="comet-avatar">
-                                            <img src="{{ user.profile.avatar.url }}"
-                                                 alt="">
-                                        </div>
-                                        <div class="post-comt-box">
-                                            <form class="comment-form" method="POST">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="post_id" value="{{ post.id }}">
-                                                <input type="hidden" name="user_id" value="{{ user.id }}">
-                                                <textarea
-                                                        class="comment-area"
-                                                        name="content"
-                                                        placeholder="Post your comment"></textarea>
-            
-            
-                                                <button type="submit" style="color: black">Add</button>
-                                            </form>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
                         </div>
-            
-                    </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Members Sidebar -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Members</h5>
+                        {% endif %}
+                    {% endfor %}
                 </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        {% for member in members %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <img src="{{ member.user.profile.avatar.url }}" class="rounded-circle" width="40" height="40">
-                                    <div class="ms-2">
-                                        <h6 class="mb-0">{{ member.user.get_full_name }}</h6>
-                                        <small class="text-muted">{{ member.role }}</small>
+            </div>
+
+            <!-- Members Sidebar -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Members</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for member in members %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ member.user.profile.avatar.url }}" class="rounded-circle" width="40" height="40">
+                                        <div class="ms-2">
+                                            <h6 class="mb-0">{{ member.user.get_full_name }}</h6>
+                                            <small class="text-muted">{{ member.role }}</small>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% if member_role == 'admin' and pending_posts %}
-    <div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0">Pending Posts</h5>
-    </div>
-    <div class="card-body">
-        {% for post in pending_posts %}
-        <div class="pending-post mb-3 p-3 border rounded" id="pending-post-{{ post.id }}">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="d-flex align-items-center mb-2">
-                        <img src="{{ post.user.profile.avatar.url }}" class="rounded-circle me-2" width="40">
-                        <div>
-                            <h6 class="mb-0">{{ post.user.get_full_name }}</h6>
-                            <small class="text-muted">{{ post.created_at|timesince }} ago</small>
-                        </div>
-                    </div>
-                    <p class="mb-2">{{ post.content }}</p>
-                    {% if post.images.all %}
-                        <div class="post-images mb-2">
-                            {% for image in post.images.all %}
-                                <img src="{{ image.image.url }}" class="img-thumbnail me-2" style="max-width: 100px;">
                             {% endfor %}
                         </div>
-                    {% endif %}
+                    </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-success btn-sm handle-post"
-                            data-post-id="{{ post.id }}"
-                            data-action="approve">
-                        Approve
-                    </button>
-                    <button class="btn btn-danger btn-sm handle-post"
-                            data-post-id="{{ post.id }}"
-                            data-action="reject">
-                        Reject
-                    </button>
+                {% if member_role == 'admin' and pending_posts %}
+        <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Pending Posts</h5>
+        </div>
+        <div class="card-body">
+            {% for post in pending_posts %}
+            <div class="pending-post mb-3 p-3 border rounded" id="pending-post-{{ post.id }}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="d-flex align-items-center mb-2">
+                            <img src="{{ post.user.profile.avatar.url }}" class="rounded-circle me-2" width="40">
+                            <div>
+                                <h6 class="mb-0">{{ post.user.get_full_name }}</h6>
+                                <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                            </div>
+                        </div>
+                        <p class="mb-2">{{ post.content }}</p>
+                        {% if post.images.all %}
+                            <div class="post-images mb-2">
+                                {% for image in post.images.all %}
+                                    <img src="{{ image.image.url }}" class="img-thumbnail me-2" style="max-width: 100px;">
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success btn-sm handle-post"
+                                data-post-id="{{ post.id }}"
+                                data-action="approve">
+                            Approve
+                        </button>
+                        <button class="btn btn-danger btn-sm handle-post"
+                                data-post-id="{{ post.id }}"
+                                data-action="reject">
+                            Reject
+                        </button>
+                    </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
+        {% endif %}
+            </div>
+        </div>
     {% endif %}
-        </div>
-    </div>
 </div>
 
 <!-- Add Member Modal -->
