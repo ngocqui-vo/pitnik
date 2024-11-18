@@ -21,6 +21,8 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from .forms import UserUpdateForm, ProfileUpdateForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse
+from django.db import models
 
 
 @login_required
@@ -36,26 +38,37 @@ class PostPagination(PageNumberPagination):
 
 @api_view(['GET'])
 def post_list(request):
-    posts = Post.objects.order_by('-created_at').filter(is_blocked=False)  # Lấy tất cả bài viết từ database
-    paginator = PostPagination()  # Sử dụng class phân trang đã tạo
-    result_page = paginator.paginate_queryset(posts, request)  # Phân trang kết quả
+    # Get posts that are:
+    # 1. Not blocked
+    # 2. Not from any group (personal posts)
+    # 3. From public groups only
+    # 4. For private groups, only show if user is a member
+    posts = Post.objects.filter(
+        is_blocked=False,
+        status='approved'  # Only show approved posts
+    ).filter(
+        # Complex filter for group posts
+        models.Q(group__isnull=True) |  # Personal posts
+        models.Q(group__is_private=False) |  # Posts from public groups
+        models.Q(group__members=request.user)  # Posts from private groups where user is member
+    ).order_by('-created_at').distinct()  # Use distinct to avoid duplicates
 
-    # Lấy danh sách các bài viết mà người dùng đã "like"
+    paginator = PostPagination()
+    result_page = paginator.paginate_queryset(posts, request)
+
+    # Get liked posts and comments
     liked_posts_ids = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
     liked_comments_ids = CommentLike.objects.filter(user=request.user).values_list('comment_id', flat=True)
 
-    # Tạo context chứa danh sách bài viết đã phân trang
     context = {
-        'posts': result_page,  # Dữ liệu đã phân trang
+        'posts': result_page,
         'user': request.user,
-        'liked_posts_ids': liked_posts_ids,  # Thêm danh sách ID bài viết đã "like",
-        'liked_comments_ids': liked_comments_ids,  # ID comment mà người dùng ��ã "like"
+        'liked_posts_ids': liked_posts_ids,
+        'liked_comments_ids': liked_comments_ids,
     }
 
-    # Render template với context đã tạo
     rendered_html = render_to_string('ajax/get_post.html', context, request=request)
 
-    # Trả về phản hồi với HTML
     return Response({
         'html': rendered_html,
         'pagination': {
@@ -797,18 +810,22 @@ class GroupPostCreateView(PostCreateView):
         for image in images:
             ImagePost.objects.create(post=post, image=image)
 
-        # Notify moderators and admins about the pending post
-        moderators = GroupMember.objects.filter(
+        # Notify admins about the pending post
+        admins = GroupMember.objects.filter(
             group=group, 
-            role__in=['admin', 'moderator']
+            role='admin'
         ).select_related('user')
 
-        for mod in moderators:
+        # Generate the group URL
+        group_url = reverse('group_detail', args=[group.id])
+        full_group_url = request.build_absolute_uri(group_url)
+
+        for admin in admins:
             Notification.objects.create(
                 sender=user,
-                recipient=mod.user,
+                recipient=admin.user,
                 notification_type='pending_post',
-                content=f'New pending post in {group.name} needs approval',
+                content=f'New pending post in <a style="text-decoration: underline;" href="{full_group_url}">{group.name}</a> needs approval',
                 group=group
             )
 

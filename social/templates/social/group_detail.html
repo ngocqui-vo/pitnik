@@ -385,7 +385,8 @@ $(document).ready(function() {
             processData: false,
             contentType: false,
             success: function(response) {
-                $('#posts-container').prepend(response.html);
+                //$('#posts-container').prepend(response.html);
+                alert('Post created successfully, please wait for approval');
                 $('#createGroupPost')[0].reset();
             },
             error: function(xhr) {

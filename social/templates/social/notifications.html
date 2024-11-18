@@ -24,7 +24,7 @@
                                                         <figure><img src="{{ notification.sender.profile.avatar.url }}" alt="">
                                                         </figure>
                                                         <div class="notifi-meta">
-                                                            <p>{{ notification.content }}</p>
+                                                            <p>{{ notification.content|safe }}</p>
                                                             <span><i class="{% if notification.notification_type == 'friend_request' or notification.notification_type == 'friend_request_accepted' %}fa fa-user {% else %}fa fa-comment{% endif %}"></i> {{ notification.created_at|timesince_filter }} ago</span>
                                                             {% if notification.notification_type == 'friend_request' and not notification.is_actioned %}
                                                             	<div class="mt-3 friend-request" data-sender-id="{{ notification.sender.id }}">
