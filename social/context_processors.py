@@ -14,7 +14,7 @@ def get_unread_notifications_count(request):
 
 def get_notifications(request):
     if request.user.is_authenticated:
-        notifications = Notification.objects.filter(recipient=request.user)[:5]
+        notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')[:5]
         return {'header_notifications': notifications}
     else:
         return {'header_notifications': []}

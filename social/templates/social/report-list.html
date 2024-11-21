@@ -11,16 +11,24 @@
         <center class="mt-5"><h1>Report list</h1></center>
         <ul>
             {% for report in reports %}
-                {% if report.is_resolve %}
-                    <li>
-                        <a class="text-success" href="{% url 'report_post_detail' report.id %}">{{ report }}</a>
-                    </li>
-                {% else %}
+                {% if not report.is_resolve %}
                     <li>
                         <a class="text-danger" href="{% url 'report_post_detail' report.id %}">{{ report }}</a>
                     </li>
                 {% endif %}
 
+            {% endfor %}
+
+        </ul>
+        <hr>
+        <center class="mt-5"><h1>Resolved report</h1></center>
+        <ul>
+            {% for report in reports %}
+                {% if report.is_resolve %}
+                    <li>
+                        <a class="text-success" href="{% url 'report_post_detail' report.id %}">{{ report }}</a>
+                    </li>
+                {% endif %}
             {% endfor %}
 
         </ul>

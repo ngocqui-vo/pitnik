@@ -175,7 +175,7 @@ def add_comment(request):
             sender=user,
             recipient=post.user,
             notification_type='commented_post',
-            content=f'{request.user.username} has commented your post'
+            content=f'{request.user.username} has commented your post: {comment.content}'
         )
 
         # Gửi thông báo qua WebSocket
@@ -186,7 +186,7 @@ def add_comment(request):
                 "type": "notification_message",
                 "notification": {
                     "sender": user.username,
-                    "content": f"{user.username} has commented your post",
+                    "content": f"{user.username} has commented your post: {comment.content}",
                     "avatar": f'{user.profile.avatar.url}',
                     "fullname": f'{user.first_name} {user.last_name}',
                     "is_read": False
@@ -601,6 +601,13 @@ def resolve_the_report(request, report_id):
     post.is_blocked = True
     report.save()
     post.save()
+    Notification.objects.create(
+        sender=request.user,
+        recipient=report.user,
+        notification_type='pending_post',
+        content=f'Your report has been accepted.',
+        group=None
+    )
     return redirect('report_list')
 
 
@@ -832,7 +839,7 @@ class GroupPostCreateView(PostCreateView):
                 sender=user,
                 recipient=admin.user,
                 notification_type='pending_post',
-                content=f'New pending post in <a style="text-decoration: underline;" href="{full_group_url}">{group.name}</a> needs approval',
+                content=f'New pending post in {group.name} needs approval',
                 group=group
             )
 

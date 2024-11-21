@@ -33,7 +33,7 @@
                                     </figure>
                                     <div class="mesg-meta">
                                         <h6>{{ header_notification.sender.first_name }} {{ header_notification.sender.last_name }}</h6>
-                                        <span>{{ header_notification.content }}</span>
+                                        <span>{{ header_notification.content|safe }}</span>
                                         <i>{{ header_notification.created_at|timesince_filter }} ago</i>
                                     </div>
                                 </a>
