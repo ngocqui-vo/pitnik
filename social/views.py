@@ -608,6 +608,13 @@ def resolve_the_report(request, report_id):
         content=f'Your report has been accepted.',
         group=None
     )
+    Notification.objects.create(
+        sender=request.user,
+        recipient=post.user,
+        notification_type='pending_post',
+        content=f'Your post has been locked. Contact to support to help',
+        group=None
+    )
     return redirect('report_list')
 
 
@@ -1090,3 +1097,12 @@ def discover_groups(request):
     
     return render(request, 'social/discover_groups.html', {'groups': groups})
 
+
+@login_required
+def delete_account(request):
+    if request.user.is_authenticated:
+        user = request.user
+        user.delete()
+        messages.success(request, "Your account has been deleted successfully.")
+        return redirect('user_login')
+    return JsonResponse({'error': 'Invalid request'}, status=400)

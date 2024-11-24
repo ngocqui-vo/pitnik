@@ -10,6 +10,12 @@ class Post(models.Model):
         ('rejected', 'Rejected')
     ]
     
+    VISIBILITY_CHOICES = [
+        ('only_me', 'Only Me'),
+        ('public', 'Public'),
+        ('friends', 'Friends'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -17,6 +23,7 @@ class Post(models.Model):
     is_blocked = models.BooleanField(default=False)
     group = models.ForeignKey('Group', on_delete=models.CASCADE, null=True, blank=True, related_name='posts')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='approved')  # Default approved for non-group posts
+    visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='public')
 
     def __str__(self):
         return self.content
