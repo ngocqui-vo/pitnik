@@ -1,0 +1,98 @@
+{% extends './base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5" style="min-height: 70vh">
+    <div class="central-meta">
+        <div class="pages">
+            <span><i class="fa fa-file"></i> Your Pages</span>
+        </div>
+        <div class="row merged20">
+            <!-- Create Page Button -->
+            <div class="col-lg-12 mb-4">
+                <a href="{% url 'create_page' %}" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> Create New Page
+                </a>
+            </div>
+
+            {% if pages %}
+                {% for page in pages %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card page-card mb-4">
+                        <!-- Page Cover Image -->
+                        <div class="page-cover">
+                            {% if page.cover_image %}
+                                <img src="{{ page.cover_image.url }}" alt="Page Cover" class="card-img-top">
+                            {% else %}
+                                <div class="default-cover bg-secondary"></div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-body">
+                            <div class="page-info">
+                                <h5 class="card-title">
+                                    <a href="{% url 'page_detail' page.id %}">
+                                        {{ page.name }}
+                                    </a>
+                                </h5>
+                                <p class="text-muted mb-2">
+                                    {{ page.description|truncatechars:100 }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="page-meta">
+                                <small class="text-muted">
+                                    Created on {{ page.created_at|date:"F j, Y" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5>You haven't created any pages yet</h5>
+                            <p class="text-muted">Create a new page to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.page-card {
+    transition: transform 0.2s;
+    height: 100%;
+}
+
+.page-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.page-cover {
+    height: 150px;
+    overflow: hidden;
+}
+
+.page-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.default-cover {
+    height: 150px;
+}
+
+.page-meta {
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}

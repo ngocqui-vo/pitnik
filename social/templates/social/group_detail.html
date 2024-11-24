@@ -93,15 +93,6 @@
 
                 <!-- Posts List -->
                 <div id="posts-container">
-                    {% comment %} {% for post in posts %}
-                        {% include 'social/includes/post_card.html' with post=post %}
-                    {% empty %}
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <p>No posts in this group yet.</p>
-                            </div>
-                        </div>
-                    {% endfor %} {% endcomment %}
                     {% for post in posts %}
                         {% if post.group %}
                         <div class="user-post">
@@ -149,6 +140,13 @@
                                                                 ]'>
                                                                 <img src="{{ post.images.all.0.image.url }}"
                                                                      alt="">
+                                                                     {% if post.images.all|length > 1 %}
+                                                    <div class="multiple-images-indicator">
+                                                        <span class="badge bg-dark position-absolute bottom-0 end-0 m-2">
+                                                            <i class="fa fa-images"></i> +{{ post.images.all|length|add:"-1" }}
+                                                        </span>
+                                                    </div>
+                                                {% endif %}
                                                             </a>
                                                         </figure>
             

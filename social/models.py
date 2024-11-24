@@ -17,6 +17,7 @@ class Post(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    page = models.ForeignKey('Page', on_delete=models.CASCADE, null=True, blank=True, related_name='posts')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -207,3 +208,14 @@ class GroupJoinRequest(models.Model):
 
     class Meta:
         unique_together = ('user', 'group')
+
+class Page(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_pages')
+    created_at = models.DateTimeField(auto_now_add=True)
+    cover_image = models.ImageField(upload_to='page_covers/', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+

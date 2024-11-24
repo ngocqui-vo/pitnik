@@ -50,5 +50,12 @@ urlpatterns = [
 
     path('groups/discover/', views.discover_groups, name='discover_groups'),
 
+    path('pages/', views.page_list, name='page_list'),
+    path('pages/create/', views.create_page, name='create_page'),
+    path('pages/<int:page_id>/', views.page_detail, name='page_detail'),
+    path('pages/<int:page_id>/update/', views.update_page, name='update_page'),
+    path('pages/<int:page_id>/delete/', views.delete_page, name='delete_page'),
+    path('pages/<int:page_id>/posts/create/', views.create_page_post, name='create_page_post'),
+
 ]
 

@@ -27,8 +27,9 @@
                             </ul>
                         </div>
                     </div>
-                    <ins><a href="{% url 'user_profile' post.user.id %}" title="">{{ post.user.username }}</a> {% if post.group %} in <a href="{% url 'group_detail' post.group.id %}">{{ post.group.name }}</a> {% endif %}
+                    <ins><a href="{% url 'user_profile' post.user.id %}" title="">{{ post.user.username }}</a> {% if post.group %} in <a href="{% url 'group_detail' post.group.id %}">{{ post.group.name }}</a> {% endif %} {% if post.page %} in <a href="{% url 'page_detail' post.page.id %}">{{ post.page.name }}</a> {% endif %}
                     </ins>
+                    
                     <span><i class="fa fa-globe"></i> published: {{ post.created_at }} </span>
                 </div>
                 <div class="post-meta">

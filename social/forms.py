@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 
 from account.models import Profile
-from .models import Post, ImagePost
+from .models import Post, ImagePost, Page
 from django.forms import modelformset_factory
 
 # Form cho Post
@@ -40,5 +40,11 @@ class ProfileUpdateForm(forms.ModelForm):
 
 class UserPostSearchForm(forms.Form):
     query = forms.CharField(label='Tìm kiếm', max_length=100, required=False)
+
+
+class PageForm(forms.ModelForm):
+    class Meta:
+        model = Page
+        fields = ['name', 'description', 'cover_image']
 
 

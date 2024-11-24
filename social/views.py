@@ -11,12 +11,12 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow, ReportPost, \
-    CommentLike, Group, GroupMember, GroupJoinRequest
-from django.shortcuts import render, redirect
+    CommentLike, Group, GroupMember, GroupJoinRequest, Page
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from account.models import User, Profile, UserProxy
 from channels.layers import get_channel_layer
-from .forms import PostForm
+from .forms import PostForm, PageForm
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from .forms import UserUpdateForm, ProfileUpdateForm
@@ -1105,3 +1105,68 @@ def delete_account(request):
         messages.success(request, "Your account has been deleted successfully.")
         return redirect('user_login')
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def create_page(request):
+    if request.method == 'POST':
+        form = PageForm(request.POST, request.FILES)
+        if form.is_valid():
+            page = form.save(commit=False)
+            page.creator = request.user
+            page.save()
+            return redirect('page_list')
+    else:
+        form = PageForm()
+    return render(request, 'social/create_page.html', {'form': form})
+
+@login_required
+def page_list(request):
+    pages = Page.objects.filter(creator=request.user)
+    return render(request, 'social/page_list.html', {'pages': pages})
+
+@login_required
+def page_detail(request, page_id):
+    page = get_object_or_404(Page, id=page_id)
+    posts = Post.objects.filter(page=page).order_by('-created_at')
+    return render(request, 'social/page_detail.html', {'page': page, 'posts': posts})
+
+@login_required
+def update_page(request, page_id):
+    page = get_object_or_404(Page, id=page_id, creator=request.user)
+    if request.method == 'POST':
+        form = PageForm(request.POST, request.FILES, instance=page)
+        if form.is_valid():
+            form.save()
+            return redirect('page_detail', page_id=page.id)
+    else:
+        form = PageForm(instance=page)
+    return render(request, 'social/update_page.html', {'form': form, 'page': page})
+
+@login_required
+def delete_page(request, page_id):
+    page = get_object_or_404(Page, id=page_id, creator=request.user)
+    page.delete()
+    return redirect('page_list')
+
+@login_required
+def create_page_post(request, page_id):
+    page = get_object_or_404(Page, id=page_id)
+    
+    if request.method == 'POST':
+        form = PostForm(request.POST)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.page = page
+            post.user = request.user
+            post.save()
+
+            # Handle image uploads
+            images = request.FILES.getlist('images')
+            for image in images:
+                ImagePost.objects.create(post=post, image=image)
+
+            
+            return redirect('page_detail', page_id=page.id)
+    
+    return JsonResponse({'success': False, 'message': 'Invalid form submission'}, status=400)
+
