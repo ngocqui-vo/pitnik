@@ -58,5 +58,6 @@ urlpatterns = [
     path('pages/<int:page_id>/posts/create/', views.create_page_post, name='create_page_post'),
     path('pages/<int:page_id>/manage-admins/', views.manage_page_admins, name='manage_page_admins'),
 
+    path('change-password/', views.change_password_user, name='change_password'),
 ]
 

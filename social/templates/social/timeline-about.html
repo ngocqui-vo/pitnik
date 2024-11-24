@@ -41,6 +41,7 @@
                                         <hr>
                                         {% if request.user == user %}
                                         	<a href="{% url 'delete_account' %}" class="btn btn-danger">Delete account</a>
+                                            <a href="{% url 'change_password' %}" class="btn btn-primary">Change password</a>
                                         {% endif %} 
 
 									</div>

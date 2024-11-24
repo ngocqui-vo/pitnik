@@ -1221,3 +1221,7 @@ def manage_page_admins(request, page_id):
 
     return render(request, 'social/manage_page_admins.html', {'page': page, 'users': users})
 
+def change_password_user(request):
+    if request.method == 'POST':
+        return redirect('index')
+    return render(request, 'social/change_password.html')
