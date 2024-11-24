@@ -14,7 +14,7 @@ from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Me
     CommentLike, Group, GroupMember, GroupJoinRequest
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from account.models import User, Profile
+from account.models import User, Profile, UserProxy
 from channels.layers import get_channel_layer
 from .forms import PostForm
 from django.contrib import messages
@@ -38,31 +38,29 @@ class PostPagination(PageNumberPagination):
 
 @api_view(['GET'])
 def post_list(request):
-    # Get posts that are:
-    # 1. Not blocked
-    # 2. Not from any group (personal posts)
-    # 3. From public groups only
-    # 4. For private groups, only show if user is a member
+    user = UserProxy.objects.get(pk=request.user.pk)  # Cast to UserProxy
+    friends = user.get_friends()  # Use the new method to get friends
+
+    # Ensure the user can see their own posts
     posts = Post.objects.filter(
         is_blocked=False,
-        status='approved'  # Only show approved posts
+        status='approved'
     ).filter(
-        # Complex filter for group posts
-        models.Q(group__isnull=True) |  # Personal posts
-        models.Q(group__is_private=False) |  # Posts from public groups
-        models.Q(group__members=request.user)  # Posts from private groups where user is member
-    ).order_by('-created_at').distinct()  # Use distinct to avoid duplicates
+        models.Q(visibility='public') |
+        models.Q(visibility='friends', user__in=friends) |
+        models.Q(visibility='only_me', user=user) |
+        models.Q(user=user)  # Ensure the user can see their own posts
+    ).order_by('-created_at').distinct()
 
     paginator = PostPagination()
     result_page = paginator.paginate_queryset(posts, request)
 
-    # Get liked posts and comments
-    liked_posts_ids = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
-    liked_comments_ids = CommentLike.objects.filter(user=request.user).values_list('comment_id', flat=True)
+    liked_posts_ids = Like.objects.filter(user=user).values_list('post_id', flat=True)
+    liked_comments_ids = CommentLike.objects.filter(user=user).values_list('comment_id', flat=True)
 
     context = {
         'posts': result_page,
-        'user': request.user,
+        'user': user,
         'liked_posts_ids': liked_posts_ids,
         'liked_comments_ids': liked_comments_ids,
     }
@@ -126,10 +124,11 @@ class PostCreateView(APIView):
     def post(self, request, *args, **kwargs):
         content = request.data.get('content')  # Lấy nội dung bài đăng
         images = request.FILES.getlist('images')  # Lấy danh sách các file hình ảnh
+        visibility = request.data.get('visibility', 'public')  # Default to public
         user = request.user
 
         # Tạo bài đăng mới
-        post = Post.objects.create(user=user, content=content)
+        post = Post.objects.create(user=user, content=content, visibility=visibility)
 
         # Lưu từng hình ảnh
         for image in images:
