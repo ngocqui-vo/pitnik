@@ -23,9 +23,13 @@
                                     <a href="{% url 'delete_page' page.id %}" class="btn btn-danger" style="color: white; text-decoration: none;">Delete Page</a>
                                     <a href="{% url 'manage_page_admins' page.id %}" class="btn btn-info" style="color: white; text-decoration: none;">Manage Admins</a>
                                 {% endif %}
+                                <button id="like-page-btn" class="btn {% if is_liked %}btn-success{% else %}btn-outline-success{% endif %}">
+                                    {% if is_liked %}Unlike{% else %}Like{% endif %} Page
+                                </button>
                             </div>
                         </div>
                         <p class="text-muted">{{ page.description }}</p>
+                        <p>{{ page.likes.count }} likes</p>
                     </div>
                 </div>
             </div>
@@ -208,6 +212,29 @@
                     },
                     error: function (xhr) {
                         alert('Error creating post. Please try again.');
+                    }
+                });
+            });
+
+            // Handle page like/unlike
+            $('#like-page-btn').click(function () {
+                $.ajax({
+                    url: "{% url 'page_detail' page.id %}",
+                    type: 'POST',
+                    data: {
+                        'like': true,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function (response) {
+                        if (response.is_liked) {
+                            $('#like-page-btn').removeClass('btn-outline-success').addClass('btn-success').text('Unlike Page');
+                        } else {
+                            $('#like-page-btn').removeClass('btn-success').addClass('btn-outline-success').text('Like Page');
+                        }
+                        $('p:contains("likes")').text(response.likes_count + ' likes');
+                    },
+                    error: function (xhr) {
+                        alert('Error liking page. Please try again.');
                     }
                 });
             });

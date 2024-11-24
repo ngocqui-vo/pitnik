@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from .models import Post, ImagePost, Comment, Like, Friendship, Notification, Message, Room, Follow, ReportPost, \
-    CommentLike, Group, GroupMember, GroupJoinRequest, Page
+    CommentLike, Group, GroupMember, GroupJoinRequest, Page, PageLike
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from account.models import User, Profile, UserProxy
@@ -1134,11 +1134,22 @@ def page_detail(request, page_id):
     page = get_object_or_404(Page, id=page_id)
     is_admin = page.is_admin(request.user)
     posts = Post.objects.filter(page=page).order_by('-created_at')
-    
+    is_liked = PageLike.objects.filter(user=request.user, page=page).exists()
+
+    if request.method == 'POST' and 'like' in request.POST:
+        if is_liked:
+            PageLike.objects.filter(user=request.user, page=page).delete()
+            is_liked = False
+        else:
+            PageLike.objects.create(user=request.user, page=page)
+            is_liked = True
+        return JsonResponse({'is_liked': is_liked, 'likes_count': page.likes.count()})
+
     context = {
         'page': page,
         'posts': posts,
-        'is_admin': is_admin
+        'is_admin': is_admin,
+        'is_liked': is_liked,
     }
     return render(request, 'social/page_detail.html', context)
 

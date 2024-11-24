@@ -223,3 +223,14 @@ class Page(models.Model):
     def is_admin(self, user):
         return self.admins.filter(id=user.id).exists()
 
+class PageLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='page_likes')
+    page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'page')
+
+    def __str__(self):
+        return f"{self.user.username} likes {self.page.name}"
+
