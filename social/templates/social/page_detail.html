@@ -18,8 +18,11 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <h2>{{ page.name }}</h2>
                             <div class="d-flex gap-2">
-                                <a href="{% url 'update_page' page.id %}" class="btn btn-primary">Edit Page</a>
-                                <a href="{% url 'delete_page' page.id %}" class="btn btn-danger">Delete Page</a>
+                                {% if is_admin or request.user == page.creator %}
+                                    <a href="{% url 'update_page' page.id %}" class="btn btn-primary" style="color: white; text-decoration: none;">Edit Page</a>
+                                    <a href="{% url 'delete_page' page.id %}" class="btn btn-danger" style="color: white; text-decoration: none;">Delete Page</a>
+                                    <a href="{% url 'manage_page_admins' page.id %}" class="btn btn-info" style="color: white; text-decoration: none;">Manage Admins</a>
+                                {% endif %}
                             </div>
                         </div>
                         <p class="text-muted">{{ page.description }}</p>
@@ -32,6 +35,7 @@
         <div class="row mt-4">
             <!-- Posts Column -->
             <div class="col-md-8">
+                {% if is_admin or request.user == page.creator %}
                 <!-- Create Post Form -->
                 <div class="card mb-4">
                     <div class="card-body">
@@ -44,6 +48,7 @@
                         </form>
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- Posts List -->
                 <div id="posts-container">

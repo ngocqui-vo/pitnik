@@ -56,6 +56,7 @@ urlpatterns = [
     path('pages/<int:page_id>/update/', views.update_page, name='update_page'),
     path('pages/<int:page_id>/delete/', views.delete_page, name='delete_page'),
     path('pages/<int:page_id>/posts/create/', views.create_page_post, name='create_page_post'),
+    path('pages/<int:page_id>/manage-admins/', views.manage_page_admins, name='manage_page_admins'),
 
 ]
 

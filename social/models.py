@@ -213,9 +213,13 @@ class Page(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_pages')
+    admins = models.ManyToManyField(User, related_name='admin_pages', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     cover_image = models.ImageField(upload_to='page_covers/', blank=True, null=True)
 
     def __str__(self):
         return self.name
+
+    def is_admin(self, user):
+        return self.admins.filter(id=user.id).exists()
 

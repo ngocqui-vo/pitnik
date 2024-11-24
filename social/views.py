@@ -1121,14 +1121,26 @@ def create_page(request):
 
 @login_required
 def page_list(request):
-    pages = Page.objects.filter(creator=request.user)
+    # Get pages where the user is the creator or an admin
+    pages = Page.objects.filter(
+        models.Q(creator=request.user) | 
+        models.Q(admins=request.user)
+    ).distinct()
+
     return render(request, 'social/page_list.html', {'pages': pages})
 
 @login_required
 def page_detail(request, page_id):
     page = get_object_or_404(Page, id=page_id)
+    is_admin = page.is_admin(request.user)
     posts = Post.objects.filter(page=page).order_by('-created_at')
-    return render(request, 'social/page_detail.html', {'page': page, 'posts': posts})
+    
+    context = {
+        'page': page,
+        'posts': posts,
+        'is_admin': is_admin
+    }
+    return render(request, 'social/page_detail.html', context)
 
 @login_required
 def update_page(request, page_id):
@@ -1152,6 +1164,7 @@ def delete_page(request, page_id):
 def create_page_post(request, page_id):
     page = get_object_or_404(Page, id=page_id)
     
+    
     if request.method == 'POST':
         form = PostForm(request.POST)
         if form.is_valid():
@@ -1165,8 +1178,35 @@ def create_page_post(request, page_id):
             for image in images:
                 ImagePost.objects.create(post=post, image=image)
 
-            
             return redirect('page_detail', page_id=page.id)
     
     return JsonResponse({'success': False, 'message': 'Invalid form submission'}, status=400)
+
+@login_required
+def manage_page_admins(request, page_id):
+    page = get_object_or_404(Page, id=page_id)
+
+    # Ensure only the creator or current admins can manage admins
+    if not (page.creator == request.user or page.is_admin(request.user)):
+        messages.error(request, "You do not have permission to manage admins for this page.")
+        return redirect('page_detail', page_id=page.id)
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        action = request.POST.get('action')
+        user = get_object_or_404(User, id=user_id)
+
+        if action == 'add':
+            page.admins.add(user)
+            messages.success(request, f"{user.username} has been added as an admin.")
+        elif action == 'remove':
+            page.admins.remove(user)
+            messages.success(request, f"{user.username} has been removed from admins.")
+
+        return redirect('manage_page_admins', page_id=page.id)
+
+    # Get all users to display in the admin management interface
+    users = User.objects.exclude(id__in=page.admins.all().values_list('id', flat=True))
+
+    return render(request, 'social/manage_page_admins.html', {'page': page, 'users': users})
 
